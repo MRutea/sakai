@@ -58,6 +58,40 @@ export class SakaiRubricsSharedList extends RubricsElement {
     SakaiRubricsHelpers.post("/rubrics-service/rest/rubrics/", this.token, options)
       .then(data => this.dispatchEvent(new CustomEvent("copy-share-site")));
   }
+
+  sortRubrics(sortInputValue, ascending) {
+    switch (sortInputValue) {
+      case 'site_name':
+        if (ascending) {
+          this.rubrics = [...this.rubrics].sort((a,b) => a.title.localeCompare(b.title));
+        } else {
+          this.rubrics = [...this.rubrics].sort((a,b) => b.title.localeCompare(a.title));
+        }	
+        break;
+      case 'site_title':
+        if (ascending) {
+          this.rubrics = [...this.rubrics].sort((a,b) => a.metadata.ownerId.localeCompare(b.metadata.ownerId));
+        } else {
+          this.rubrics = [...this.rubrics].sort((a,b) => b.metadata.ownerId.localeCompare(a.metadata.ownerId));
+        }	
+        break;
+      case 'creator_name':
+        if (ascending) {
+          this.rubrics = [...this.rubrics].sort((a,b) => a.metadata.creatorId.localeCompare(b.metadata.creatorId));
+        } else {
+          this.rubrics = [...this.rubrics].sort((a,b) => b.metadata.creatorId.localeCompare(a.metadata.creatorId));
+        }
+        break;
+      case 'modified':
+        if (ascending) {
+          this.rubrics = [...this.rubrics].sort((a,b) => a.metadata.modified.localeCompare(b.metadata.modified));
+        } else {
+          this.rubrics = [...this.rubrics].sort((a,b) => b.metadata.modified.localeCompare(a.metadata.modified));
+        }
+        break;
+    }
+  }
+
 }
 
 customElements.define("sakai-rubrics-shared-list", SakaiRubricsSharedList);

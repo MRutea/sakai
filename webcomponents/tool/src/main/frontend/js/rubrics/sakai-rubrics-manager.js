@@ -45,32 +45,41 @@ class SakaiRubricsManager extends RubricsElement {
             <span class="collpase-icon fa fa-chevron-down"></span>
             <sr-lang key="site_rubrics">site_rubrics</sr-lang>
           </div>
-          <div class="hidden-xs"><sr-lang key="site_title">site_title</sr-lang></div>
-          <div class="hidden-xs"><sr-lang key="creator_name">creator_name</sr-lang></div>
-          <div class="hidden-xs"><sr-lang key="modified">modified</sr-lang></div>
-          <div class="actions"><sr-lang key="actions">actions</sr-lang></div>
         </div>
 
-        <div role="tabpanel" aria-labelledby="site-rubrics-title" id="site_rubrics">
-          <sakai-rubrics-list @sharing-change="${this.handleSharingChange}" @copy-share-site="${this.copyShareSite}" token="Bearer ${this.token}"></sakai-rubrics-list>
+      <div role="tabpanel" aria-labelledby="site-rubrics-title" id="site_rubrics">
+        <div class="rubric-title-sorting">
+          <div @click="${this.sortSiteRubrics}"><a href="javascript:void(0)" style="text-decoration: none;"><sr-lang class="site_name" key="site_name">site_name</sr-lang><span class="collpase-icon fa fa-chevron-up site_name sort_element_site"></span></a></div>
+          <div @click="${this.sortSiteRubrics}"><a href="javascript:void(0)" style="text-decoration: none;"><sr-lang class="site_title" key="site_title">site_title</sr-lang><span class="site_title sort_element_site"></span></a></div>
+          <div @click="${this.sortSiteRubrics}"><a href="javascript:void(0)" style="text-decoration: none;"><sr-lang class="creator_name" key="creator_name">creator_name</sr-lang><span class="creator_name sort_element_site"></span></a></div>
+          <div @click="${this.sortSiteRubrics}"><a href="javascript:void(0)" style="text-decoration: none;"><sr-lang class="modified" key="modified">modified</sr-lang><span class="modified sort_element_site"></span></a></div>
+          <div class="actions"><sr-lang key="actions">actions</sr-lang></div>
         </div>
+        <br>
+        <sakai-rubrics-list id="sakai-rubrics" @sharing-change="${this.handleSharingChange}" @copy-share-site="${this.copyShareSite}" token="Bearer ${this.token}"></sakai-rubrics-list>
+      </div>
 
         <div id="shared-rubrics-title" aria-expanded="${this.sharedRubricsExpanded}" role="tab" aria-multiselectable="true" class="manager-collapse-title" title="${tr("toggle_shared_rubrics")}" tabindex="0" @click="${this.toggleSharedRubrics}">
           <div>
             <span class="collpase-icon fa fa-chevron-down"></span>
             <sr-lang key="shared_rubrics">shared_rubrics</sr-lang>
           </div>
-          <div class="hidden-xs"><sr-lang key="site_title">site_title</sr-lang></div>
-          <div class="hidden-xs"><sr-lang key="creator_name">creator_name</sr-lang></div>
-          <div class="hidden-xs"><sr-lang key="modified">modified</sr-lang></div>
-          <div class="actions"><sr-lang key="actions">actions</sr-lang></div>
         </div>
 
-        <div role="tabpanel" aria-labelledby="shared-rubrics-title" id="shared_rubrics">
-          <div id="sharedlist">
-            <sakai-rubrics-shared-list token="Bearer ${this.token}" id="sakai-rubrics-shared-list" @copy-share-site="${this.copyShareSite}" ></sakai-rubrics-shared-list>
-          </div>
+      <div role="tabpanel" aria-labelledby="shared-rubrics-title" id="shared_rubrics">
+        <div id="sharedlist">
+          <div class="rubric-title-sorting">
+          <div @click="${this.sortSharedRubrics}"><a href="javascript:void(0)" style="text-decoration: none;"><sr-lang class="site_name" key="site_name">site_name</sr-lang><span class="collpase-icon fa fa-chevron-up site_name sort_element_shared"></span></a></div>
+          <div @click="${this.sortSharedRubrics}"><a href="javascript:void(0)" style="text-decoration: none;"><sr-lang class="site_title" key="site_title">site_title</sr-lang><span class="site_title sort_element_shared"></span></a></div>
+          <div @click="${this.sortSharedRubrics}"><a href="javascript:void(0)" style="text-decoration: none;"><sr-lang class="creator_name" key="creator_name">creator_name</sr-lang><span class="creator_name sort_element_shared"></span></a></div>
+          <div @click="${this.sortSharedRubrics}"><a href="javascript:void(0)" style="text-decoration: none;"><sr-lang class="modified" key="modified">modified</sr-lang><span class="modified sort_element_shared"></span></a></div>
+          <div class="actions"><sr-lang key="actions">actions</sr-lang></div>
         </div>
+        <br>
+        <sakai-rubrics-shared-list token="Bearer ${this.token}" id="sakai-rubrics-shared-list" @copy-share-site="${this.copyShareSite}" ></sakai-rubrics-shared-list>
+      </div>
+      <br>
+      </div>
 
       </div>
     `;
@@ -131,6 +140,133 @@ class SakaiRubricsManager extends RubricsElement {
       });
     });
   }
+
+  sortSiteRubrics(event) {
+    var sortInput = event.target.className;
+    var sortInputValue = sortInput.toString().toLowerCase();
+    var ascending = true; 
+    //icon from header
+    $('.sort_element_site').each( function( i, val ) {
+      var className = $( val ).attr('class');
+      if (!className.includes(sortInputValue)) {
+        $( val ).removeClass('collpase-icon fa fa-chevron-down');
+        $( val ).removeClass('collpase-icon fa fa-chevron-up');
+      }
+    });
+    switch (sortInputValue) {
+      case 'site_name':
+        if ($('.site_name.sort_element_site').hasClass('collpase-icon fa fa-chevron-up')) {
+          $('.site_name.sort_element_site').removeClass('collpase-icon fa fa-chevron-up');
+          $('.site_name.sort_element_site').addClass('collpase-icon fa fa-chevron-down');
+          ascending = false; 
+        } else {
+          $('.site_name.sort_element_site').removeClass('collpase-icon fa fa-chevron-down');
+          $('.site_name.sort_element_site').addClass('collpase-icon fa fa-chevron-up');
+          ascending = true;
+        }
+        break;
+      case 'site_title':
+        if ($('.site_title.sort_element_site').hasClass('collpase-icon fa fa-chevron-up')) {
+          $('.site_title.sort_element_site').removeClass('collpase-icon fa fa-chevron-up');
+          $('.site_title.sort_element_site').addClass('collpase-icon fa fa-chevron-down');
+          ascending = false;
+        } else {
+          $('.site_title.sort_element_site').removeClass('collpase-icon fa fa-chevron-down');
+          $('.site_title.sort_element_site').addClass('collpase-icon fa fa-chevron-up');
+          ascending = true;
+        }
+        break;
+      case 'creator_name':
+        if ($('.creator_name.sort_element_site').hasClass('collpase-icon fa fa-chevron-up')) {
+          $('.creator_name.sort_element_site').removeClass('collpase-icon fa fa-chevron-up');
+          $('.creator_name.sort_element_site').addClass('collpase-icon fa fa-chevron-down');
+          ascending = false;
+        } else {
+          $('.creator_name.sort_element_site').removeClass('collpase-icon fa fa-chevron-down');
+          $('.creator_name.sort_element_site').addClass('collpase-icon fa fa-chevron-up');
+          ascending = true;
+        }
+        break;
+      case 'modified':
+        if ($('.modified.sort_element_site').hasClass('collpase-icon fa fa-chevron-up')) {
+          $('.modified.sort_element_site').removeClass('collpase-icon fa fa-chevron-up');
+          $('.modified.sort_element_site').addClass('collpase-icon fa fa-chevron-down');
+          ascending = false;
+        } else {
+          $('.modified.sort_element_site').removeClass('collpase-icon fa fa-chevron-down');
+          $('.modified.sort_element_site').addClass('collpase-icon fa fa-chevron-up');
+          ascending = true;
+        }
+        break;
+    } 
+
+    let elementChildSite= this.querySelector("sakai-rubrics-list");
+    elementChildSite.sortRubrics(sortInputValue, ascending);
+  }
+
+  sortSharedRubrics(event) {
+    var sortInput = event.target.className;
+    var sortInputValue = sortInput.toString().toLowerCase();
+    var ascending = true; 
+    //icon from header
+    $('.sort_element_shared').each( function( i, val ) {
+      var className = $( val ).attr('class');
+      if (!className.includes(sortInputValue)) {
+        $( val ).removeClass('collpase-icon fa fa-chevron-down');
+        $( val ).removeClass('collpase-icon fa fa-chevron-up');
+      }
+    });
+    switch (sortInputValue) {
+      case 'site_name':
+        if ($('.site_name.sort_element_shared').hasClass('collpase-icon fa fa-chevron-up')) {
+          $('.site_name.sort_element_shared').removeClass('collpase-icon fa fa-chevron-up');
+          $('.site_name.sort_element_shared').addClass('collpase-icon fa fa-chevron-down');
+          ascending = false; 
+        } else {
+          $('.site_name.sort_element_shared').removeClass('collpase-icon fa fa-chevron-down');
+          $('.site_name.sort_element_shared').addClass('collpase-icon fa fa-chevron-up');
+          ascending = true;
+        }
+        break;
+      case 'site_title':
+        if ($('.site_title.sort_element_shared').hasClass('collpase-icon fa fa-chevron-up')) {
+          $('.site_title.sort_element_shared').removeClass('collpase-icon fa fa-chevron-up');
+          $('.site_title.sort_element_shared').addClass('collpase-icon fa fa-chevron-down');
+          ascending = false;
+        } else {
+          $('.site_title.sort_element_shared').removeClass('collpase-icon fa fa-chevron-down');
+          $('.site_title.sort_element_shared').addClass('collpase-icon fa fa-chevron-up');
+          ascending = true;
+        }
+        break;
+      case 'creator_name':
+        if ($('.creator_name.sort_element_shared').hasClass('collpase-icon fa fa-chevron-up')) {
+          $('.creator_name.sort_element_shared').removeClass('collpase-icon fa fa-chevron-up');
+          $('.creator_name.sort_element_shared').addClass('collpase-icon fa fa-chevron-down');
+          ascending = false;
+        } else {
+          $('.creator_name.sort_element_shared').removeClass('collpase-icon fa fa-chevron-down');
+          $('.creator_name.sort_element_shared').addClass('collpase-icon fa fa-chevron-up');
+          ascending = true;
+        }
+        break;
+      case 'modified':
+        if ($('.modified.sort_element_shared').hasClass('collpase-icon fa fa-chevron-up')) {
+          $('.modified.sort_element_shared').removeClass('collpase-icon fa fa-chevron-up');
+          $('.modified.sort_element_shared').addClass('collpase-icon fa fa-chevron-down');
+          ascending = false;
+        } else {
+          $('.modified.sort_element_shared').removeClass('collpase-icon fa fa-chevron-down');
+          $('.modified.sort_element_shared').addClass('collpase-icon fa fa-chevron-up');
+          ascending = true;
+        }
+        break;
+    } 
+
+    let elementChildShared= this.querySelector("sakai-rubrics-shared-list");
+    elementChildShared.sortRubrics(sortInputValue, ascending);
+  }
+ 
 }
 
 customElements.define("sakai-rubrics-manager", SakaiRubricsManager);
