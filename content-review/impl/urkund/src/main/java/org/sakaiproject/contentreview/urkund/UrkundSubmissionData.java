@@ -73,7 +73,6 @@ public class UrkundSubmissionData {
 	public Map<String, Object> Report;
 	public String Subject;
 	public Boolean Anonymous;
-	public Boolean AutoDeleteDocument;
 	
 	public String LocalisedMessage;
 	public String Message;

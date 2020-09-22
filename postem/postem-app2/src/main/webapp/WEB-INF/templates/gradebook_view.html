@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/common :: head" />
+<body>
+  <div th:replace="fragments/common :: jQuery" />
+  <div class="portletBody">
+    <div id="menu" th:include="fragments/menus :: main (index)" />
+		
+		<div class="sak-banner-info"
+			th:if="${studentsList== null or studentsList.isEmpty()}"
+			th:text="#{no_gradebooks}">There are currently no items at this
+			location.</div>
+			
+				<br />
+				<p th:text="#{gradebook_lastmodified} + ' ' + ${currentGradebook.updatedDateTime}"></p>
+				<br />
+
+			<table th:if="${studentsList != null and !studentsList.isEmpty()}" id="groupTable"
+				class="table table-striped table-bordered table-hover">
+				<thead>
+					<tr>
+						<th th:text="#{username}"></th>
+						<span th:each="student : ${studentsList}">
+							<span th:each="heading, iterStats : ${student.gradebook.headings}">
+								<span th:if="!${iterStats.first}">
+									<th th:text=" ${heading}"></th>
+								</span>
+							</span>
+						</span>
+						<th th:text="#{student_lastchecked}"></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="student : ${studentsList}">
+						<td th:text="${student?.username}"></td>
+						<span th:each="student : ${studentsList}">
+							 <th th:text=" ${grade}" th:each="grade : ${student.grades}"></th>
+						</span>
+						<td th:text="${student?.checkDateTime}"></td>
+					</tr>
+
+				</tbody>
+			</table>
+			<div class="act">
+              <a th:href="@{/}" accesskey="x" id="gradebook-cancel-button" class="btn btn-default" th:text="#{back}">Back</a>
+            </div>
+	</div>
+	
+<script th:replace="fragments/javascript :: indexJs" />
+</body>
+</html>

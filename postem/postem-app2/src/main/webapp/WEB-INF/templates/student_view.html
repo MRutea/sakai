@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/common :: head" />
+<body>
+	<div th:replace="fragments/common :: jQuery" />
+	<div class="portletBody">
+		<div id="menu" th:include="fragments/menus :: main (index)" />
+
+		<h1 th:text="#{view_student}"></h1>
+		<div>
+		    <form action="#" th:action="@{/student_view_result/{gradebookId}(gradebookId = ${gradebookId})}" method="post" id="student_view_form">
+			<label th:text="#{choose_username}"></label> 
+			<select
+				id="selectedParticipant"
+				onchange="studentViewFunctions.showStudent();">
+				<option th:each="category : ${studentMap}"
+					th:value="${category.value}" th:selected="${category.value eq lastSelected}" th:text="${category.key}">
+			</select>
+			</form>
+		</div>
+		<br>
+		<div id="select_participant" th:if="${selStudent == null}">
+			<span th:text="#{select_participant}"></span>
+		</div>
+		
+		<table th:if="${selStudent != null}">
+  		<tr>
+    		<th>Student</th>
+    		<td></td>
+    		<td th:text="${selStudent.username}"></td>
+  		</tr>
+  		<tr th:each="heading, iterStats : ${selStudent.gradebook.headings}">
+  		<span th:if="!${iterStats.first}">
+       <th th:text=" ${heading}"></th>
+       <td></td>
+       <td th:text="${selStudent.grades[iterStats.index-1]}"></td>
+       </span>
+       </tr>
+       </table>
+  
+		<div class="act">
+			<a th:href="@{/}" accesskey="x" id="gradebook-cancel-button"
+				class="btn btn-default" th:text="#{back}">Back</a>
+		</div>
+	</div>
+
+	<script th:replace="fragments/javascript :: studentViewJs" />
+</body>
+</html>

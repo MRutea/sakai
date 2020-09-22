@@ -18,6 +18,7 @@
     <module>postem-app</module>
     <module>postem-hbm</module>
     <module>postem-impl</module>
+    <module>postem-app2</module>
   </modules>
 
   <dependencyManagement>

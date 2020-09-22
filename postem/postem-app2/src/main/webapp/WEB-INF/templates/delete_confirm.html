@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/common :: head" />
+<body>
+  <div th:replace="fragments/common :: jQuery" />
+  <div class="portletBody">
+    <div id="menu" th:include="fragments/menus :: main (index)" />
+			
+		<div class="sak-banner-warn" th:text="#{delete_confirm}"></div>
+			<table>
+				<tr>
+					<th scope="row" th:text="#{title_label}"></th>
+					<td th:text="${currentGradebook.title}"></td>
+				</tr>
+			</table>
+			<br>
+			<div class="act">
+	          <a th:href="@{/processDelete/{gradebookId}(gradebookId = ${currentGradebook?.id})}" accesskey="x" class="active" id="gradebook-continue-button" th:value="#{bar_delete}">Delete</a>
+              <a th:href="@{/}" accesskey="x" id="gradebook-cancel-button" class="btn btn-default" th:text="#{cancel}">Cancel</a>
+            </div>
+              
+<script th:replace="fragments/javascript :: studentViewJs" />
+</body>
+</html>

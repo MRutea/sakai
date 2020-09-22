@@ -3825,6 +3825,7 @@ public class AssignmentAction extends PagedResourceActionII {
         String template = (String) getContext(data).get("template");
 
         boolean useSakaiGrader = serverConfigurationService.getBoolean("assignment.usegraderbydefault", true);
+
         Preferences prefs = preferencesService.getPreferences(sessionManager.getCurrentSessionUserId());
         ResourceProperties props = prefs.getProperties("viewpreferences");
         if (props != null) {
@@ -4503,8 +4504,6 @@ public class AssignmentAction extends PagedResourceActionII {
 
         // letter grading
         letterGradeOptionsIntoContext(context);
-
-        context.put("useGraderByDefault", serverConfigurationService.getBoolean("assignment.usegraderbydefault", true));
 
         // ever set the default grade for no-submissions
         if (assignment != null && assignment.getTypeOfSubmission() == Assignment.SubmissionType.NON_ELECTRONIC_ASSIGNMENT_SUBMISSION) {

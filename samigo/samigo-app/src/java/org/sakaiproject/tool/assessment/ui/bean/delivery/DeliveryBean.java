@@ -664,9 +664,6 @@ public class DeliveryBean implements Serializable {
         int submissionsRemaining = control.getSubmissionsAllowed().intValue() - totalSubmissions;
         setNumberRetake(
             gradingService.getNumberRetake(publishedAssessmentId, AgentFacade.getAgentString()));
-
-        // dont return a negative value in case of retakes
-        if (submissionsRemaining < 0) submissionsRemaining = 0;
         setSubmissionsRemaining(submissionsRemaining);
       }
     }
@@ -1960,7 +1957,7 @@ public class DeliveryBean implements Serializable {
     	
     log.debug("check 7");
     // check 7: any submission attempt left?
-    if (!getHasSubmissionLeft(numberRetake, actualNumberRetake)) {
+    if (!getHasSubmissionLeft(numberRetake)){
       return "noSubmissionLeft";
     }
 
@@ -2039,7 +2036,7 @@ public class DeliveryBean implements Serializable {
 	  return checkBeforeProceed(isSubmitForGrade, isFromTimer, isViaUrlLogin);
   }
 
-  private boolean getHasSubmissionLeft(final int numberRetake, final int actualNumberRetake) {
+  private boolean getHasSubmissionLeft(int numberRetake){
     boolean hasSubmissionLeft = false;
     int maxSubmissionsAllowed = 9999;
     if ( (Boolean.FALSE).equals(publishedAssessment.getAssessmentAccessControl().getUnlimitedSubmissions())){
@@ -2051,14 +2048,13 @@ public class DeliveryBean implements Serializable {
       settingsDeliveryBean.setMaxAttempts(maxSubmissionsAllowed);
       settings = settingsDeliveryBean;
     }
-    log.debug("getHasSubmissionLeft: actualNumberTakes={}, numberRetakeAllowed={}", actualNumberRetake, numberRetake);
-    if (actualNumberRetake <= numberRetake) {
+    if (totalSubmissions < maxSubmissionsAllowed + numberRetake){
       hasSubmissionLeft = true;
     }
     return hasSubmissionLeft;
   }
 
-  public boolean isAvailable(){
+  private boolean isAvailable(){
 	  boolean isAvailable = true;
 	  Date currentDate = new Date();
 		Date startDate;

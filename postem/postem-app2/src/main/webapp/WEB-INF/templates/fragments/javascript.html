@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<body>
+<script th:fragment="studentViewJs" th:inline="javascript">
+  /*<![CDATA[*/
+  var studentViewFunctions = {
+		  
+    showStudent: function () {
+      var selectedParticipant = document.getElementById('selectedParticipant').value;
+      console.log(selectedParticipant);
+        console.log(document.getElementById('student_view_form'));
+        document.getElementById('student_view_form').action;
+        document.getElementById('student_view_form').action = document.getElementById('student_view_form').action+'/'+selectedParticipant;
+        document.getElementById('student_view_form').submit();
+}
+}
+  /*]]>*/
+</script>
+<script th:fragment="indexJs" th:inline="javascript">
+  /*<![CDATA[*/
+  var indexFunctions = {
+    checkSubmitButton : function () {
+      var anyCheckboxEnabled = false;
+      $(':checkbox').each(function() {
+        if(this.checked) {
+          $('#delete-groups-submit-button').attr('disabled', false);
+          anyCheckboxEnabled = true;
+        }
+      });
+
+      if(!anyCheckboxEnabled) {
+        $('#delete-groups-submit-button').attr('disabled', true);
+      }
+    }
+
+  }
+  /*]]>*/
+  </script>
+
+</body>
+</html>

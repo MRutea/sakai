@@ -832,7 +832,7 @@ public class PostemTool {
 		}
 		Long currentGbId = ((Gradebook) gradebookTable.getRowData()).getId();
 		currentGradebook = gradebookManager.getGradebookByIdWithHeadingsAndStudents(currentGbId);
-		
+
 		students = new ArrayList(currentGradebook.getStudents());
 
 		return "view_gradebook";
