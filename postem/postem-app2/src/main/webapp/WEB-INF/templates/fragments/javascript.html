@@ -7,14 +7,13 @@
 		  
     showStudent: function () {
       var selectedParticipant = document.getElementById('selectedParticipant').value;
-      console.log(selectedParticipant);
-        console.log(document.getElementById('student_view_form'));
-        document.getElementById('student_view_form').action;
-        document.getElementById('student_view_form').action = document.getElementById('student_view_form').action+'/'+selectedParticipant;
-        document.getElementById('student_view_form').submit();
-}
+      document.getElementById('student_view_form').action;
+      document.getElementById('student_view_form').action = document.getElementById('student_view_form').action+'/'+selectedParticipant;
+      document.getElementById('student_view_form').submit();
+    }
 }
   /*]]>*/
+</script>
 </script>
 <script th:fragment="indexJs" th:inline="javascript">
   /*<![CDATA[*/

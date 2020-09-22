@@ -95,8 +95,8 @@ public class ColumnsController {
 		String lastSelected = "";
 		
 		if(selectedStudent!=null) {		
-		selStudent = postemSakaiService.getStudentByGBAndUsername(currentGradebook, selectedStudent);
-		selStudent.setGradebook(currentGradebook);
+			selStudent = postemSakaiService.getStudentByGBAndUsername(currentGradebook, selectedStudent);
+			selStudent.setGradebook(currentGradebook);
 		if (selStudent != null) {
 			lastSelected = selStudent.getUsername();
 		} 

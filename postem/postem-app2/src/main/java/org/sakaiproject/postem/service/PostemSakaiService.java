@@ -141,8 +141,6 @@ public class PostemSakaiService  {
 	}
 	
 	public TreeMap processGradebookView(Long gradebookId) {
-		
-		// if instructor, we need to load all students
 		if (isEditable()) {
 			currentGradebook = gradebookManager.getGradebookByIdWithHeadings(gradebookId);
 			currentGradebook.setUsernames(gradebookManager.getUsernamesInGradebook(currentGradebook));
