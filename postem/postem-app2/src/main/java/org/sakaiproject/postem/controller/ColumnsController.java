@@ -56,17 +56,15 @@ public class ColumnsController {
     public String getViewGradebook(@PathVariable("gradebookId") Long gradebookId, Model model) {
         log.debug("getViewGradebook()");
         
-		String userId = sessionManager.getCurrentSessionUserId();
-		pair = postemSakaiService.processInstructorView(gradebookId);
-		
-		if(pair.getFirst().toString().equals(PostemToolConstants.PERMISSION_ERROR) && pair.getSecond()==null) {
-			return PostemToolConstants.PERMISSION_ERROR;
-		}
-		
-		currentGradebook = (Gradebook) pair.getFirst();
-		students = (ArrayList) pair.getSecond();
-		model.addAttribute("currentGradebook", currentGradebook);
-		model.addAttribute("studentsList", students);
+        String userId = sessionManager.getCurrentSessionUserId();
+        pair = postemSakaiService.processInstructorView(gradebookId);		
+        if(pair.getFirst().toString().equals(PostemToolConstants.PERMISSION_ERROR) && pair.getSecond()==null) {
+          return PostemToolConstants.PERMISSION_ERROR;
+        }		
+        currentGradebook = (Gradebook) pair.getFirst();
+        students = (ArrayList) pair.getSecond();
+        model.addAttribute("currentGradebook", currentGradebook);
+        model.addAttribute("studentsList", students);
 
         return PostemToolConstants.GRADEBOOK_VIEW;
     }
@@ -176,6 +174,12 @@ public class ColumnsController {
                 .contentLength(file.length()) //
                 .body(resource);
 
+    }
+    
+    @RequestMapping(value = {"/gradebook_update"})
+    public String getGradebookUpdate(Model model) {
+        log.debug("getGradebookUpdate()");
+        return PostemToolConstants.ADD_ITEM;
     }
    
 }
