@@ -31,12 +31,15 @@ import java.util.stream.Stream;
 import javax.inject.Inject;
 
 import org.springframework.stereotype.Service;
-
+import org.springframework.web.context.request.RequestContextHolder;
 import org.apache.commons.lang3.StringUtils;
 import org.sakaiproject.api.app.postem.data.Gradebook;
 import org.sakaiproject.api.app.postem.data.GradebookManager;
 import org.sakaiproject.api.app.postem.data.StudentGrades;
 import org.sakaiproject.component.api.ServerConfigurationService;
+import org.sakaiproject.content.api.FilePickerHelper;
+import org.sakaiproject.entity.api.Reference;
+import org.sakaiproject.entity.cover.EntityManager;
 import org.sakaiproject.event.api.EventTrackingService;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
@@ -47,6 +50,7 @@ import org.sakaiproject.site.api.Group;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.tool.api.Placement;
 import org.sakaiproject.tool.api.SessionManager;
+import org.sakaiproject.tool.api.ToolSession;
 import org.sakaiproject.user.api.PreferencesService;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
@@ -75,6 +79,8 @@ public class PostemSakaiService  {
 	private Boolean editable;
 	protected TreeMap studentMap;
 	protected String csv = null;
+	private List filePickerList;
+	private Reference attachment;
 	
 	@Inject
 	private SessionManager sessionManager;
@@ -224,29 +230,90 @@ public class PostemSakaiService  {
 		return pair;
 	}
 	
-	public boolean isEditable() {
-		if (editable == null) {
-			editable = checkAccess();
-		}
-		return editable;
+  public boolean isEditable() {
+    if (editable == null) {
+      editable = checkAccess();
+    }
+    return editable;
+  }
 
-	}
-	
-	
-	public boolean checkAccess() {
-		// return true;
-		return SiteService.allowUpdateSite(ToolManager.getCurrentPlacement()
-				.getContext());
-	}
+  public boolean checkAccess() {
+    return SiteService.allowUpdateSite(ToolManager.getCurrentPlacement().getContext());
+  }
 
-	public Gradebook getGradebookById(Long gradebookId) {
-		Gradebook currentGradebook = gradebookManager.getGradebookByIdWithHeadingsAndStudents(gradebookId);
-		return currentGradebook;
-	}
+  public Pair getGradebookById(Long gradebookId) {
+    try {
+      if (!this.checkAccess()) {
+        throw new PermissionException(sessionManager.getCurrentSessionUserId(),
+          "syllabus_access_athz", "");
+      }
+   } catch (PermissionException e) {
+  return new Pair(PostemToolConstants.PERMISSION_ERROR, null);
+}
+      Gradebook currentGradebook = gradebookManager.getGradebookByIdWithHeadingsAndStudents(gradebookId);
+      Pair pair = new Pair(null, currentGradebook);
+      return pair;
+  }
 	
-	public StudentGrades getStudentByGBAndUsername(Gradebook currentGradebook, String selectedStudent) {
-		StudentGrades selStudent = gradebookManager.getStudentByGBAndUsername(currentGradebook, selectedStudent);
-		return selStudent;
-	}
+  public StudentGrades getStudentByGBAndUsername(Gradebook currentGradebook, String selectedStudent) {
+    StudentGrades selStudent = gradebookManager.getStudentByGBAndUsername(currentGradebook, selectedStudent);
+    return selStudent;
+  }
+
+  public String processAddAttachRedirect() {
+    try {
+      filePickerList = EntityManager.newReferenceList();
+      ToolSession currentToolSession = sessionManager.getCurrentToolSession();
+      currentToolSession.setAttribute("filepicker.attach_cardinality",FilePickerHelper.CARDINALITY_SINGLE);	      
+      currentToolSession.setAttribute(FilePickerHelper.FILE_PICKER_ATTACHMENTS, filePickerList);
+
+      System.out.println("processAddAttachRedirect");
+
+	      return null;
+} catch(Exception e) {
+	      log.error(this + ".processAddAttachRedirect - " + e);
+      return null;
+    }
+  }
+
+  public Reference getAttachmentReference()
+  {
+    ToolSession session = sessionManager.getCurrentToolSession();
+    if (session.getAttribute(FilePickerHelper.FILE_PICKER_CANCEL) == null &&
+        session.getAttribute(FilePickerHelper.FILE_PICKER_ATTACHMENTS) != null)
+    {
+      List refs = (List)session.getAttribute(FilePickerHelper.FILE_PICKER_ATTACHMENTS);
+      Reference ref = null;
+
+      if (refs.size() == 1)
+      {
+        ref = (Reference) refs.get(0);
+        attachment=ref;
+        }
+      }
+    session.removeAttribute(FilePickerHelper.FILE_PICKER_ATTACHMENTS);
+    session.removeAttribute(FilePickerHelper.FILE_PICKER_CANCEL);
+    if(filePickerList != null)
+      filePickerList.clear();
+
+    return attachment;
+  }
+  
+  public String getAttachmentTitle () {
+	  return getReferenceTitle(getAttachmentReference());
+  }
+  
+  public void setAttachment(Reference attachment)
+  {
+    this.attachment = attachment;
+  }
+
+  public String getReferenceTitle (Reference ref) {
+	  if (ref != null && ref.getProperties() != null) {
+		  return (String) ref.getProperties().getProperty(ref.getProperties().getNamePropDisplayName());
+}
+	  return null;
+  }
+  
 
 }

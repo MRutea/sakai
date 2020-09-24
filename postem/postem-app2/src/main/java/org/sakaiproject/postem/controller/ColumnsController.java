@@ -88,7 +88,11 @@ public class ColumnsController {
         
 		String userId = sessionManager.getCurrentSessionUserId();
 		studentMap = postemSakaiService.processGradebookView(gradebookId);
-		currentGradebook = postemSakaiService.getGradebookById(gradebookId);
+		Pair pair = postemSakaiService.getGradebookById(gradebookId);
+        if(pair.getFirst()!=null && pair.getFirst().toString().equals(PostemToolConstants.PERMISSION_ERROR) && pair.getSecond()==null) {
+            return PostemToolConstants.PERMISSION_ERROR;
+          }		
+          currentGradebook = (Gradebook) pair.getSecond();
 		StudentGrades selStudent = null;
 		String lastSelected = "";
 		
@@ -176,9 +180,15 @@ public class ColumnsController {
 
     }
     
-    @RequestMapping(value = {"/gradebook_update"})
-    public String getGradebookUpdate(Model model) {
+    @RequestMapping(value = {"/gradebook_update/{gradebookId}"})
+    public String getGradebookUpdate(@PathVariable("gradebookId") Long gradebookId, Model model) {
         log.debug("getGradebookUpdate()");
+        String userId = sessionManager.getCurrentSessionUserId();
+		Pair pair = postemSakaiService.getGradebookById(gradebookId);
+        if(pair.getFirst()!= null && pair.getFirst().toString().equals(PostemToolConstants.PERMISSION_ERROR) && pair.getSecond()==null) {
+            return PostemToolConstants.PERMISSION_ERROR;
+          }		
+          currentGradebook = (Gradebook) pair.getSecond();
         return PostemToolConstants.ADD_ITEM;
     }
    

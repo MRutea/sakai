@@ -41,7 +41,7 @@
                 <td th:if="${!gradebook?.release}" th:text="#{no}"></td>
                 <td><a th:href="@{/gradebook_view/{gradebookId}(gradebookId = ${gradebook?.id})}" th:text="#{gradebook_view}"></a></td>
                 <td><a th:href="@{/student_view/{gradebookId}(gradebookId = ${gradebook?.id})}" th:text="#{gradebook_preview}"></a></td>
-                <td><a th:href="@{/gradebook_update}" th:text="#{gradebook_update}"></a></td>
+                <td><a th:href="@{/gradebook_update/{gradebookId}(gradebookId = ${gradebook?.id})}" th:text="#{gradebook_update}"></a></td>
                 <td><a th:href="@{/delete_confirm/{gradebookId}(gradebookId = ${gradebook?.id})}" th:text="#{gradebook_delete}"></a></td>
                 <td><a th:href="@{/process_csv_download/{gradebookId}(gradebookId = ${gradebook?.id})}" th:text="#{csv_download}"></a></td>
               </tr>

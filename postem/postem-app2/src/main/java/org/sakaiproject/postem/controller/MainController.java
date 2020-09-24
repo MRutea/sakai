@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
 import org.sakaiproject.api.app.postem.data.Gradebook;
 import org.sakaiproject.postem.constants.PostemToolConstants;
 import org.sakaiproject.postem.service.PostemSakaiService;
@@ -62,10 +63,16 @@ public class MainController {
         log.debug("addItem()");
         
 		String userId = sessionManager.getCurrentSessionUserId();
-                
-        System.out.println("Step 2");
-
         return PostemToolConstants.ADD_ITEM;
+    }
+    
+    @RequestMapping(value = {"/processAddAttachRedirect"})
+    public String processAddAttachRedirect(Model model) {
+        log.debug("processAddAttachRedirect()");
+        
+		String userId = sessionManager.getCurrentSessionUserId();
+		postemSakaiService.processAddAttachRedirect();
+		return PostemToolConstants.ADD_ITEM;
     }
 
 }
