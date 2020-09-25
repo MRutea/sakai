@@ -9,24 +9,84 @@
   window.onload = function() {
 	console.log('Entering..');
     Dropzone.options.dropzoneForm = {
-			 uploadMultiple: false,
-		     maxFiles: 1,
-		     acceptedFiles: '.csv',
-		     accept: function(file, done) {
-		       alert("uploaded");
-		       done();
-		     },
-		     
-		     init: function() {
-		       this.on("maxfilesexceeded", function(file){
-		           alert("No more files please!");
-		       });
-		       this.on("complete", function(file) {
-		    	   dropzoneForm.removeFile(file);
-		    	 });
-		     }
-		    
-	};
+    	    // do not change these values as the dropzone logic depends on these values
+    	    autoProcessQueue: false,
+    	    parallelUploads: 1,
+    	    uploadMultiple: false,
+    	    addRemoveLinks: true,
+    	    maxFilesize: 5, // MB
+    	    timeout: 0, // Dropzone 4.4.0 introduced a 30sec default timeout
+    	    dictFallbackMessage: "msg1",
+    	    dictFallbackText: "msg2",
+    	    dictFileTooBig: "msg3",
+    	    dictInvalidFileType: "msg4",
+    	    dictResponseError: "msg5",
+    	    dictCancelUpload: "msg6",
+    	    dictCancelUploadConfirmation: "msg7",
+    	    dictRemoveFile: "msg8",
+    	    dictMaxFilesExceeded: "msg9",
+    	    dictFolderUploadError: "msg10",
+
+    	    init: function() {
+    	        var dz = this;
+    	        var status;
+    	        var submitButton = document.querySelector("#gradebook-continue-button");
+
+    	        this.on("removedfile", function() {
+    	            if (!this.getQueuedFiles().length) {
+    	                document.getElementById("gradebook-continue-button").disabled=true;
+    	            }
+    	        });
+
+    	        this.on("complete", function(file) {
+    	            var queuedFiles = this.getQueuedFiles();
+
+    	            // don't process any more files if there is an error 
+    	            if(queuedFiles.length > 0 && status === Dropzone.SUCCESS) {
+    	                this.processFile(queuedFiles.shift());
+    	            }
+    	        });
+
+    	        this.on("queuecomplete", function() {
+    	            if(status === Dropzone.SUCCESS) {
+    	                document.getElementById('addContentForm').submit();
+    	            }
+    	        });
+
+    	        this.on("drop", function() {
+    	            document.getElementById("gradebook-continue-button").disabled=false;
+    	        });
+
+    	        this.on("addedfile", function() {
+    	            document.getElementById("gradebook-continue-button").disabled=false;
+    	        });
+
+    	        this.on("sending", function(file, xhr, formData) {
+    	            var overwrite = document.querySelector('input[name="overwrite"]:checked').value;
+    	            formData.append("overwrite",overwrite);
+    	            formData.append("fullPath",file.fullPath);
+    	        });
+
+    	        this.on("error", function(file, message, xhr) {
+    	            status = file.status;
+    	            document.getElementById("gradebook-continue-button").disabled=true;
+    	        });
+
+    	        this.on("success", function(file, responseText, e) {
+    	            status = file.status;
+    	            file.previewTemplate.appendChild(document.createTextNode(responseText));
+    	        });
+
+    	        // Client side copyright check
+    	        submitButton.addEventListener("click", function() {
+
+    	            if (checkCopyright(submitButton))
+    	            {
+    	                dz.processQueue(); // Tell Dropzone to process all queued files.
+    	            }
+    	        });
+    	    }
+    	};
     
   }
   /*]]>*/

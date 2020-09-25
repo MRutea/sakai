@@ -15,8 +15,13 @@
  ******************************************************************************/
 package org.sakaiproject.postem.controller;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,8 +85,32 @@ public class MainController {
     }
     
     @RequestMapping(value = "/uploadFile", method = RequestMethod.POST)
-	public String submit(@RequestParam("file") MultipartFile file, ModelMap modelMap) {
-	    modelMap.addAttribute("file", file);
+	public String submit(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
+	    
+		if (file.isEmpty()) {
+			request.setAttribute("message",
+			        "Please select a file to upload");
+			return "uploadStatus";
+		}
+		
+		request.getPathInfo();
+		request.getContextPath();
+		String tomcatBase = System.getProperty("catalina.base");
+
+		try {
+			byte[] bytes = file.getBytes();
+			Path path = Paths.get("C:/"
+			        + file.getOriginalFilename());
+			Files.write(path, bytes);
+
+			request.setAttribute("message",
+			        "You have successfully uploaded '"
+			                + file.getOriginalFilename() + "'");
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	    return "fileUploadView";
 	}
 

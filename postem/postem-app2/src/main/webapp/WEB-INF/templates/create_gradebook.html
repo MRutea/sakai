@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="fragments/common :: head" />
-<script th:replace="fragments/javascript :: createGradeBookJs" />
+
 <body>
   <div th:replace="fragments/common :: jQuery" />
   <div class="portletBody">
@@ -16,25 +16,18 @@
 					<strong th:text="#{feedback_instructions}"/></strong><br />
 					<div th:utext="#{feedback_first} + '<br>'+ #{feedback_second}  + '<br>'+  #{feedback_third}"></div>
 				</div>
-	 <div class="form-group">
-	         					<div class="col-sm-6">
-							<label for="gradeBookFeedBackFile" class="form-control-label" th:text="#{feedback_title}">Feedback File</label>
-							</div>
-	 </div>
 	 <br>
 	 <div class="form-group">
-		<div id="dropzone">
-		 <form id="dropzone-form" th:action="@{/uploadFile}" class="dropzone" enctype="multipart/form-data" method="post">
-							<div class="col-sm-4">
-							<button type="button"id="cancel-button" class="btn btn-default" th:text="#{gradebook_choosefile}">Choose a CSV file or URL from Resources</button>
-							</div>
-
-					<br>
+		<div id="dragDropWrapper">
+		<label for="gradeBookFeedBackFile" class="form-control-label" th:text="#{feedback_title}">Feedback File</label>
+		 <form id="dropzone-form" th:action="@{/uploadFile}" class="dropzone" method="post">
+							<div class="dz-default dz-message"><button type="button" th:text="#{gradebook_choosefile}"></button></div>
 		 </form>
+		 <br />
 		 </div>
 	</div>
 		 
-          <form id="form" th:action="@{/create_gradebook}" th:object="${autoGroupsForm}" method="post" enctype="multipart/form-data">
+          <form th:action="@{/create_gradebook}" name="addContentForm" id="addContentForm" method="post" enctype="multipart/form-data">
           			<br>
 				      <div class="form-group row">
         					<div class="col-sm-2">
@@ -57,7 +50,7 @@
 					</div>
 					<br>	
 			 <div class="act">
-              <input accesskey="x" type="submit" class="active" id="gradebook-continue-button" th:value="#{bar_post}">
+              <input accesskey="x" type="submit" class="active" id="gradebook-continue-button" th:value="#{bar_post}" disabled=true>
               <a th:href="@{/}" accesskey="x" id="gradebook-cancel-button" class="btn btn-default" th:text="#{cancel}">Cancel</a>
             </div>
 			</form>
