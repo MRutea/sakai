@@ -22,6 +22,8 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.multipart.MultipartResolver;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -47,17 +49,6 @@ public class ThymeleafConfig extends WebMvcConfigurerAdapter implements Applicat
         this.applicationContext = applicationContext;
     }
 
-    /**
-     * To get static resources from a Thymeleaf project.
-     */
-//    @Override
-//    public void addResourceHandlers(final ResourceHandlerRegistry registry) {
-//        super.addResourceHandlers(registry);
-//        registry.addResourceHandler("/images/**").addResourceLocations("/images/");
-//        registry.addResourceHandler("/css/**").addResourceLocations("/css/");
-//        registry.addResourceHandler("/js/**").addResourceLocations("/js/");
-//    }
-
     @Bean
     public MessageSource messageSource() {
         ResourceLoaderMessageSource messages = new ResourceLoaderMessageSource();
@@ -71,6 +62,14 @@ public class ThymeleafConfig extends WebMvcConfigurerAdapter implements Applicat
         viewResolver.setTemplateEngine(templateEngine());
         viewResolver.setCharacterEncoding(UTF8);
         return viewResolver;
+    }
+
+    @Bean
+    public MultipartResolver multipartResolver() {
+        CommonsMultipartResolver commonsMultipartResolver = new CommonsMultipartResolver();
+        commonsMultipartResolver.setMaxUploadSize(100000);
+        commonsMultipartResolver.setDefaultEncoding("UTF-8");
+        return commonsMultipartResolver;
     }
 
     private ISpringTemplateEngine templateEngine() {

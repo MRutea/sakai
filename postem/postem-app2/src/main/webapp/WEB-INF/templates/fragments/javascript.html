@@ -1,6 +1,36 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
 <body>
+<script th:fragment="createGradeBookJs" th:inline="javascript">
+  /*<![CDATA[*/
+  // Load dropzone library
+  includeWebjarLibrary('dropzone');
+  
+  window.onload = function() {
+	console.log('Entering..');
+    Dropzone.options.dropzoneForm = {
+			 uploadMultiple: false,
+		     maxFiles: 1,
+		     acceptedFiles: '.csv',
+		     accept: function(file, done) {
+		       alert("uploaded");
+		       done();
+		     },
+		     
+		     init: function() {
+		       this.on("maxfilesexceeded", function(file){
+		           alert("No more files please!");
+		       });
+		       this.on("complete", function(file) {
+		    	   dropzoneForm.removeFile(file);
+		    	 });
+		     }
+		    
+	};
+    
+  }
+  /*]]>*/
+</script>
 <script th:fragment="studentViewJs" th:inline="javascript">
   /*<![CDATA[*/
   var studentViewFunctions = {

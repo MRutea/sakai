@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="fragments/common :: head" />
+<script th:replace="fragments/javascript :: createGradeBookJs" />
 <body>
   <div th:replace="fragments/common :: jQuery" />
   <div class="portletBody">
@@ -8,16 +9,31 @@
       	<div class="page-header">
           <h1 th:text="#{create_update}"/></h1>
         </div>
-        
 <!--         	<h:panelGroup styleClass="alertMessage" rendered="#{PostemTool.displayErrors}"> -->
 <!-- 				  <h:messages globalOnly="true" layout="table" /> -->
 <!-- 			</h:panelGroup> -->
-
 				<div class="instruction">
 					<strong th:text="#{feedback_instructions}"/></strong><br />
 					<div th:utext="#{feedback_first} + '<br>'+ #{feedback_second}  + '<br>'+  #{feedback_third}"></div>
 				</div>
-				
+	 <div class="form-group">
+	         					<div class="col-sm-6">
+							<label for="gradeBookFeedBackFile" class="form-control-label" th:text="#{feedback_title}">Feedback File</label>
+							</div>
+	 </div>
+	 <br>
+	 <div class="form-group">
+		<div id="dropzone">
+		 <form id="dropzone-form" th:action="@{/uploadFile}" class="dropzone" enctype="multipart/form-data" method="post">
+							<div class="col-sm-4">
+							<button type="button"id="cancel-button" class="btn btn-default" th:text="#{gradebook_choosefile}">Choose a CSV file or URL from Resources</button>
+							</div>
+
+					<br>
+		 </form>
+		 </div>
+	</div>
+		 
           <form id="form" th:action="@{/create_gradebook}" th:object="${autoGroupsForm}" method="post" enctype="multipart/form-data">
           			<br>
 				      <div class="form-group row">
@@ -29,15 +45,7 @@
 							</div>
 					 </div>
 					 <br>
-					<div class="form-group row">
-        					<div class="col-sm-2">
-							<label for="gradeBookFeedBackFile" class="form-control-label" th:text="#{feedback_title}">Feedback File</label>
-							</div>
-							<div class="col-sm-4">
-							<a th:href="@{/processAddAttachRedirect}" accesskey="x" id="cancel-button" class="btn btn-default" th:text="#{gradebook_choosefile}">Choose a CSV file or URL from Resources</a>
-							</div>
-					</div>
-					<br>
+
 					<div class="form-group row">
         				<div class="col-sm-2">						
 						<label for="gradeBookFeedBackAvail" class="form-control-label" th:text="#{gradebook_feedbackavail}">Feedback Availability</label>
@@ -54,6 +62,6 @@
             </div>
 			</form>
 					
-<script th:replace="fragments/javascript :: indexJs" />
+<script th:replace="fragments/javascript :: createGradeBookJs" />
 </body>
 </html>
