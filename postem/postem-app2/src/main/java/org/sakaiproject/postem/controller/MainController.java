@@ -20,23 +20,25 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
-import lombok.extern.slf4j.Slf4j;
+import org.sakaiproject.api.app.postem.data.Gradebook;
+import org.sakaiproject.api.app.postem.data.GradebookManager;
+import org.sakaiproject.postem.constants.PostemToolConstants;
+import org.sakaiproject.postem.service.PostemSakaiService;
+import org.sakaiproject.tool.api.SessionManager;
+import org.sakaiproject.tool.cover.ToolManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.ModelAndView;
-import org.sakaiproject.api.app.postem.data.Gradebook;
-import org.sakaiproject.postem.constants.PostemToolConstants;
-import org.sakaiproject.postem.service.PostemSakaiService;
-import org.sakaiproject.tool.api.SessionManager;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Controller
@@ -47,6 +49,9 @@ public class MainController {
     
 	@Inject
 	private SessionManager sessionManager;
+	
+	@Inject
+	private GradebookManager gradebookManager;
 
     @RequestMapping(value = {"/", "/index"})
     public String showIndex(Model model) {
@@ -72,16 +77,12 @@ public class MainController {
         log.debug("addItem()");
         
 		String userId = sessionManager.getCurrentSessionUserId();
+		String siteId = ToolManager.getCurrentPlacement().getContext();
+		Gradebook currentGradebook = postemSakaiService.createEmptyGradebook(userId, siteId);
+		currentGradebook.setTitle("");
+		currentGradebook.setReleased(false);
+  		model.addAttribute("gradebook", currentGradebook);
         return PostemToolConstants.ADD_ITEM;
-    }
-    
-    @RequestMapping(value = {"/processAddAttachRedirect"})
-    public String processAddAttachRedirect(Model model) {
-        log.debug("processAddAttachRedirect()");
-        
-		String userId = sessionManager.getCurrentSessionUserId();
-		postemSakaiService.processAddAttachRedirect();
-		return PostemToolConstants.ADD_ITEM;
     }
     
     @RequestMapping(value = "/uploadFile", method = RequestMethod.POST)
@@ -99,7 +100,7 @@ public class MainController {
 
 		try {
 			byte[] bytes = file.getBytes();
-			Path path = Paths.get("C:/"
+			Path path = Paths.get("C:/Users/Public/"
 			        + file.getOriginalFilename());
 			Files.write(path, bytes);
 
@@ -111,7 +112,15 @@ public class MainController {
 			e.printStackTrace();
 		}
 
-	    return "fileUploadView";
+		return PostemToolConstants.INDEX_TEMPLATE;
+	}
+    
+    @RequestMapping(value = "/create_gradebook", method = RequestMethod.POST)
+	public String createGradebook(@RequestParam("file") MultipartFile file, HttpServletRequest request, Model model) {
+	    
+    	postemSakaiService.processCreate();
+
+		return PostemToolConstants.INDEX_TEMPLATE;
 	}
 
 }

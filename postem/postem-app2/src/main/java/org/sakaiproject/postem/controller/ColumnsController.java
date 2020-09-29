@@ -21,7 +21,6 @@ import org.sakaiproject.postem.helpers.Pair;
 import org.sakaiproject.postem.service.PostemSakaiService;
 import org.sakaiproject.tool.api.SessionManager;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -30,7 +29,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -188,7 +186,13 @@ public class ColumnsController {
         if(pair.getFirst()!= null && pair.getFirst().toString().equals(PostemToolConstants.PERMISSION_ERROR) && pair.getSecond()==null) {
             return PostemToolConstants.PERMISSION_ERROR;
           }		
-          currentGradebook = (Gradebook) pair.getSecond();
+        currentGradebook = (Gradebook) pair.getSecond();
+        String fileReference = currentGradebook.getFileReference();
+        String[] parts = fileReference.split("/");
+        String partFileReference = parts[parts.length-1];
+  		model.addAttribute("gradebook", currentGradebook);
+  		model.addAttribute("gradebookId", gradebookId);
+  		model.addAttribute("partFileReference", partFileReference);
         return PostemToolConstants.ADD_ITEM;
     }
    

@@ -9,7 +9,7 @@
       	<div class="page-header">
           <h1 th:text="#{create_update}"/></h1>
         </div>
-<!--         	<h:panelGroup styleClass="alertMessage" rendered="#{PostemTool.displayErrors}"> -->
+<!--         <h:panelGroup styleClass="alertMessage" rendered="#{PostemTool.displayErrors}"> -->
 <!-- 				  <h:messages globalOnly="true" layout="table" /> -->
 <!-- 			</h:panelGroup> -->
 				<div class="instruction">
@@ -20,21 +20,23 @@
 	 <div class="form-group">
 		<div id="dragDropWrapper">
 		<label for="gradeBookFeedBackFile" class="form-control-label" th:text="#{feedback_title}">Feedback File</label>
+		<span th:text="${partFileReference}"></span>
 		 <form id="dropzone-form" th:action="@{/uploadFile}" class="dropzone" method="post">
-							<div class="dz-default dz-message"><button type="button" th:text="#{gradebook_choosefile}"></button></div>
+			<div class="dz-default dz-message"><button type="button" th:text="#{gradebook_choosefile}"></button></div>
 		 </form>
 		 <br />
 		 </div>
 	</div>
 		 
-          <form th:action="@{/create_gradebook}" name="addContentForm" id="addContentForm" method="post" enctype="multipart/form-data">
+          <form th:action="@{/create_gradebook}" name="addContentForm" id="addContentForm" method="post" enctype="multipart/form-data" th:object="${gradebook}">
+          	<input type="file" name="file" type="hidden" id="mydropzonefile"/>
           			<br>
 				      <div class="form-group row">
         					<div class="col-sm-2">
 							<label for="gradeBookTitle" class="form-control-label" th:text="#{gradebook_title}">Title</label>
 							</div>
 							<div class="col-sm-4">
-							<input name="gradeBookTitle" type="text" id="title"   />
+							<input name="gradeBookTitle" type="text" id="title" th:field="*{title}"/>
 							</div>
 					 </div>
 					 <br>
@@ -44,13 +46,13 @@
 						<label for="gradeBookFeedBackAvail" class="form-control-label" th:text="#{gradebook_feedbackavail}">Feedback Availability</label>
 						</div>
 						<div class="col-sm-4">
-						<input type="checkbox" name="gradeBookFeedBackAvail" id="title"/>
+						<input type="checkbox" name="gradeBookFeedBackAvail" id="released" th:field="*{released}" />
 						<label for="gradeBookFeedBackAvail" class="form-control-label" th:text="#{release}">Release feedback to participants?</label>
 						</div>
 					</div>
 					<br>	
 			 <div class="act">
-              <input accesskey="x" type="submit" class="active" id="gradebook-continue-button" th:value="#{bar_post}" disabled=true>
+              <input accesskey="x" type="submit" class="active" id="gradebook-continue-button" th:value="#{bar_post}">
               <a th:href="@{/}" accesskey="x" id="gradebook-cancel-button" class="btn btn-default" th:text="#{cancel}">Cancel</a>
             </div>
 			</form>
