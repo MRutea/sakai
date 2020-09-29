@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Locale;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -31,6 +32,7 @@ import org.sakaiproject.postem.service.PostemSakaiService;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.tool.cover.ToolManager;
 import org.sakaiproject.util.ResourceLoader;
+import org.sakaiproject.util.ResourceLoaderMessageSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -45,8 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Controller
 public class MainController {
-	
-	public static final String messageBundle = "org.sakaiproject.tool.postem.bundle.Messages";
 
     @Autowired
     private PostemSakaiService postemSakaiService;
@@ -56,6 +56,8 @@ public class MainController {
 	
 	@Inject
 	private GradebookManager gradebookManager;
+	
+	private static final int TITLE_MAX_LENGTH = 255;
 
     @RequestMapping(value = {"/", "/index"})
     public String showIndex(Model model) {
@@ -92,29 +94,7 @@ public class MainController {
     @RequestMapping(value = "/uploadFile", method = RequestMethod.POST)
 	public String submit(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
 	    
-		if (file.isEmpty()) {
-			request.setAttribute("message",
-			        "Please select a file to upload");
-			return "uploadStatus";
-		}
-		
-		request.getPathInfo();
-		request.getContextPath();
-		String tomcatBase = System.getProperty("catalina.base");
-
-		try {
-			byte[] bytes = file.getBytes();
-			Path path = Paths.get("C:/Users/Public/"
-			        + file.getOriginalFilename());
-			Files.write(path, bytes);
-
-			request.setAttribute("message",
-			        "You have successfully uploaded '"
-			                + file.getOriginalFilename() + "'");
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+    	String result = postemSakaiService.doDragDropUpload(file, request);
 
 		return PostemToolConstants.INDEX_TEMPLATE;
 	}
@@ -125,16 +105,24 @@ public class MainController {
 		String userId = sessionManager.getCurrentSessionUserId();
 		String siteId = ToolManager.getCurrentPlacement().getContext();
 		Gradebook currentGradebook = postemSakaiService.createEmptyGradebook(userId, siteId);
-		currentGradebook.setTitle("New grades01");
+		currentGradebook.setTitle("xcx");
 		currentGradebook.setReleased(false);
     	String result = postemSakaiService.processCreate(currentGradebook);
     	
   		model.addAttribute("gradebook", currentGradebook);
-  		final ResourceLoader rb = new ResourceLoader(messageBundle);
     	switch (result) {
     	  case PostemToolConstants.DUPLICATE_TITLE: 
-    		 model.addAttribute("errorMessage", rb.getFormattedMessage("duplicate_title"));
-    		 return PostemToolConstants.ADD_ITEM; 
+    		 model.addAttribute("errorMessage", PostemToolConstants.DUPLICATE_TITLE);
+    		 return PostemToolConstants.ADD_ITEM;
+    	  case PostemToolConstants.MISSING_TITLE: 
+    		 model.addAttribute("errorMessage", PostemToolConstants.MISSING_TITLE);
+    		 return PostemToolConstants.ADD_ITEM;
+    	  case PostemToolConstants.TITLE_TOO_LONG: 
+    		 model.addAttribute("errorMessage", PostemToolConstants.TITLE_TOO_LONG);
+    		 return PostemToolConstants.ADD_ITEM;
+    	  case PostemToolConstants.MISSING_CSV: 
+    		 model.addAttribute("errorMessage", PostemToolConstants.MISSING_CSV);
+    		 return PostemToolConstants.ADD_ITEM;
     	}
     	
 		return PostemToolConstants.INDEX_TEMPLATE;

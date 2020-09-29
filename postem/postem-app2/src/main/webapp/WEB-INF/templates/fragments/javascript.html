@@ -6,69 +6,28 @@
   // Load dropzone library
   includeWebjarLibrary('dropzone');
   
-  window.onload = function() {
-	console.log('Entering..');
-    Dropzone.options.dropzoneForm = {
-    	    // do not change these values as the dropzone logic depends on these values
-    	    autoProcessQueue: false,
-    	    parallelUploads: 1,
-    	    uploadMultiple: false,
-    	    addRemoveLinks: true,
-    	    maxFiles: 1,
-    	    acceptedFiles: ".csv",
-    	    timeout: 0, // Dropzone 4.4.0 introduced a 30sec default timeout
-    	    dictFallbackMessage: "msg1",
-    	    dictFallbackText: "msg2",
-    	    dictFileTooBig: "msg3",
-    	    dictInvalidFileType: "msg4",
-    	    dictResponseError: "msg5",
-    	    dictCancelUpload: "msg6",
-    	    dictCancelUploadConfirmation: "msg7",
-    	    dictRemoveFile: "msg8",
-    	    dictMaxFilesExceeded: "msg9",
-    	    dictFolderUploadError: "msg10",
+  $( document ).ready(function() {
+  // myDropzone is the configuration for the element that has an id attribute
+  // with the value my-dropzone (or myDropzone)
+   Dropzone.options.dropzoneForm = {
+	  autoProcessQueue: false,
+	  acceptedFiles: ".csv",
+	  maxFiles: 1,
+      addRemoveLinks: true,
+      init: function () {
+    	var dz = this;
+        var submitButton = document.querySelector("#gradebook-continue-button");
+		this.on("maxfilesexceeded", function(file) { this.removeFile(file); });
+        // Client side copyright check
+        submitButton.addEventListener("click", function() {
+        	console.log(1);
+                dz.processQueue(); // Tell Dropzone to process all queued files.
+        });
+		
+      }
+    };
+  });
 
-    	    init: function() {
-    	    	console.log('Entering2..');
-    	    	
-    	        this.on("addedfile", function() {
-    	            document.getElementById("gradebook-cancel-button").disabled=false;
-    	        });
-    	    	
-    	    	this.on("maxfilesexceeded", function(file) { this.removeFile(file); });
-    	    	
-    	    	this.on("complete", function(file) {
-    	    		  this.removeFile(file);
-    	    		});
-    	    	
-    	        this.on("addedfile", function(file) {
-
-    	          // Create the remove button
-    	          var removeButton = Dropzone.createElement("<button>Remove file</button>");
-    	          
-
-    	          // Capture the Dropzone instance as closure.
-    	          var _this = this;
-
-    	          // Listen to the click event
-    	          removeButton.addEventListener("click", function(e) {
-    	            // Make sure the button click doesn't submit the form:
-    	            e.preventDefault();
-    	            e.stopPropagation();
-
-    	            // Remove the file preview.
-    	            _this.removeFile(file);
-    	            // If you want to the delete the file on the server as well,
-    	            // you can do the AJAX request here.
-    	          });
-
-    	          // Add the button to the file preview element.
-    	          file.previewElement.appendChild(removeButton);
-    	        });
-    	    }
-    	};
-    
-  }
   /*]]>*/
 </script>
 <script th:fragment="studentViewJs" th:inline="javascript">

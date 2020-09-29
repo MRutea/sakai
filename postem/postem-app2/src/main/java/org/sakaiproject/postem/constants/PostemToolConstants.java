@@ -26,5 +26,8 @@ public class PostemToolConstants {
     public static final String DELETE_CONFIRM = "delete_confirm";
     public static final String DOWNDLOAD_CSV = "downdload_csv";
     public static final String DUPLICATE_TITLE = "duplicate_title";
+    public static final String MISSING_TITLE = "missing_title";
+    public static final String TITLE_TOO_LONG = "title_too_long";
+    public static final String MISSING_CSV = "missing_csv";
 
 }
