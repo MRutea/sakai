@@ -9,9 +9,7 @@
       	<div class="page-header">
           <h1 th:text="#{create_update}"/></h1>
         </div>
-<!--         <h:panelGroup styleClass="alertMessage" rendered="#{PostemTool.displayErrors}"> -->
-<!-- 				  <h:messages globalOnly="true" layout="table" /> -->
-<!-- 			</h:panelGroup> -->
+		<div class="sak-banner-alert" th:if="${errorMessage!= null or errorMessage!=''}" th:text="${errorMessage}"></div>
 				<div class="instruction">
 					<strong th:text="#{feedback_instructions}"/></strong><br />
 					<div th:utext="#{feedback_first} + '<br>'+ #{feedback_second}  + '<br>'+  #{feedback_third}"></div>
@@ -29,7 +27,7 @@
 	</div>
 		 
           <form th:action="@{/create_gradebook}" name="addContentForm" id="addContentForm" method="post" enctype="multipart/form-data" th:object="${gradebook}">
-          	<input type="file" name="file" type="hidden" id="mydropzonefile"/>
+          	<input name="file" type="hidden" id="mydropzonefile"/>
           			<br>
 				      <div class="form-group row">
         					<div class="col-sm-2">

@@ -25,5 +25,6 @@ public class PostemToolConstants {
     public static final String PERMISSION_ERROR = "permission_error";
     public static final String DELETE_CONFIRM = "delete_confirm";
     public static final String DOWNDLOAD_CSV = "downdload_csv";
+    public static final String DUPLICATE_TITLE = "duplicate_title";
 
 }

@@ -30,9 +30,11 @@ import org.sakaiproject.postem.constants.PostemToolConstants;
 import org.sakaiproject.postem.service.PostemSakaiService;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.tool.cover.ToolManager;
+import org.sakaiproject.util.ResourceLoader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -43,6 +45,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Controller
 public class MainController {
+	
+	public static final String messageBundle = "org.sakaiproject.tool.postem.bundle.Messages";
 
     @Autowired
     private PostemSakaiService postemSakaiService;
@@ -116,10 +120,23 @@ public class MainController {
 	}
     
     @RequestMapping(value = "/create_gradebook", method = RequestMethod.POST)
-	public String createGradebook(@RequestParam("file") MultipartFile file, HttpServletRequest request, Model model) {
+	public String createGradebook(@ModelAttribute Object gradebook, Model model) {
 	    
-    	postemSakaiService.processCreate();
-
+		String userId = sessionManager.getCurrentSessionUserId();
+		String siteId = ToolManager.getCurrentPlacement().getContext();
+		Gradebook currentGradebook = postemSakaiService.createEmptyGradebook(userId, siteId);
+		currentGradebook.setTitle("New grades01");
+		currentGradebook.setReleased(false);
+    	String result = postemSakaiService.processCreate(currentGradebook);
+    	
+  		model.addAttribute("gradebook", currentGradebook);
+  		final ResourceLoader rb = new ResourceLoader(messageBundle);
+    	switch (result) {
+    	  case PostemToolConstants.DUPLICATE_TITLE: 
+    		 model.addAttribute("errorMessage", rb.getFormattedMessage("duplicate_title"));
+    		 return PostemToolConstants.ADD_ITEM; 
+    	}
+    	
 		return PostemToolConstants.INDEX_TEMPLATE;
 	}
 

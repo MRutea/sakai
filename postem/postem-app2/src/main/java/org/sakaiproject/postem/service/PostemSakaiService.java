@@ -26,12 +26,10 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.zip.DataFormatException;
 
-import javax.faces.application.FacesMessage;
-import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 
 import org.springframework.stereotype.Service;
-import org.apache.myfaces.shared_impl.util.MessageUtils;
+import org.springframework.ui.Model;
 import org.sakaiproject.api.app.postem.data.Gradebook;
 import org.sakaiproject.api.app.postem.data.GradebookManager;
 import org.sakaiproject.api.app.postem.data.StudentGrades;
@@ -50,11 +48,9 @@ import org.sakaiproject.postem.helpers.Pair;
 import org.sakaiproject.tool.api.Placement;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.tool.api.ToolSession;
+import org.sakaiproject.tool.cover.ToolManager;
 import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.user.api.UserNotDefinedException;
-import org.sakaiproject.tool.cover.ToolManager;
-import org.sakaiproject.tool.postem.PostemTool;
-import org.sakaiproject.tool.postem.URLConnectionReader;
 import org.sakaiproject.postem.helpers.CSV;
 import org.sakaiproject.site.cover.SiteService;
 
@@ -262,7 +258,7 @@ public class PostemSakaiService  {
 	    return gradebook;
 	  }
   
-	public String processCreate() {
+	public String processCreate(Gradebook gradebook) {
 
 		try {
 			if (!this.checkAccess()) {
@@ -278,20 +274,18 @@ public class PostemSakaiService  {
 			return PostemToolConstants.PERMISSION_ERROR;
 		}
 		
-		if (currentGradebook.getId() == null) {
+		if (gradebook.getId() == null) {
 			ArrayList gb = getGradebooks();
 			Iterator gi = gb.iterator();
 			while (gi.hasNext()) {
 				if (((Gradebook) gi.next()).getTitle().equals(
-						currentGradebook.getTitle())) {
-					//To stay consistent, remove current messages when adding a new message
-					//so as to only display one error message before returning
-					clearMessages();
-					//ToDo create alert message "duplicate_title"
-					return PostemToolConstants.ADD_ITEM;
+						gradebook.getTitle())) {
+					//alert message "duplicate_title"
+					return PostemToolConstants.DUPLICATE_TITLE;
 				}
 			}
 		}
+		System.out.println();
 //		if (currentGradebook.getTitle() == null
 //				|| currentGradebook.getTitle().equals("")) {
 //			//To stay consistent, remove current messages when adding a new message
@@ -553,9 +547,6 @@ public class PostemSakaiService  {
 		return gradebooks;
 	}
 
-	protected static void clearMessages() {
-
-    }
   
   
   
