@@ -15,33 +15,18 @@
  ******************************************************************************/
 package org.sakaiproject.postem.controller;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.Locale;
-
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-
 import org.sakaiproject.api.app.postem.data.Gradebook;
 import org.sakaiproject.api.app.postem.data.GradebookManager;
 import org.sakaiproject.postem.constants.PostemToolConstants;
 import org.sakaiproject.postem.service.PostemSakaiService;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.tool.cover.ToolManager;
-import org.sakaiproject.util.ResourceLoader;
-import org.sakaiproject.util.ResourceLoaderMessageSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -90,42 +75,5 @@ public class MainController {
   		model.addAttribute("gradebook", currentGradebook);
         return PostemToolConstants.ADD_ITEM;
     }
-    
-    @RequestMapping(value = "/uploadFile", method = RequestMethod.POST)
-	public String submit(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
-	    
-    	String result = postemSakaiService.doDragDropUpload(file, request);
-
-		return PostemToolConstants.INDEX_TEMPLATE;
-	}
-    
-    @RequestMapping(value = "/create_gradebook", method = RequestMethod.POST)
-	public String createGradebook(@ModelAttribute Object gradebook, Model model) {
-	    
-		String userId = sessionManager.getCurrentSessionUserId();
-		String siteId = ToolManager.getCurrentPlacement().getContext();
-		Gradebook currentGradebook = postemSakaiService.createEmptyGradebook(userId, siteId);
-		currentGradebook.setTitle("xcx");
-		currentGradebook.setReleased(false);
-    	String result = postemSakaiService.processCreate(currentGradebook);
-    	
-  		model.addAttribute("gradebook", currentGradebook);
-    	switch (result) {
-    	  case PostemToolConstants.DUPLICATE_TITLE: 
-    		 model.addAttribute("errorMessage", PostemToolConstants.DUPLICATE_TITLE);
-    		 return PostemToolConstants.ADD_ITEM;
-    	  case PostemToolConstants.MISSING_TITLE: 
-    		 model.addAttribute("errorMessage", PostemToolConstants.MISSING_TITLE);
-    		 return PostemToolConstants.ADD_ITEM;
-    	  case PostemToolConstants.TITLE_TOO_LONG: 
-    		 model.addAttribute("errorMessage", PostemToolConstants.TITLE_TOO_LONG);
-    		 return PostemToolConstants.ADD_ITEM;
-    	  case PostemToolConstants.MISSING_CSV: 
-    		 model.addAttribute("errorMessage", PostemToolConstants.MISSING_CSV);
-    		 return PostemToolConstants.ADD_ITEM;
-    	}
-    	
-		return PostemToolConstants.INDEX_TEMPLATE;
-	}
-
+   
 }

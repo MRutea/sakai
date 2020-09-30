@@ -16,6 +16,7 @@
 package org.sakaiproject.postem.service;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -24,6 +25,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.UUID;
+import java.util.Vector;
 import java.util.zip.DataFormatException;
 
 import javax.inject.Inject;
@@ -32,24 +35,36 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 import org.springframework.web.multipart.MultipartFile;
+import org.apache.commons.io.FilenameUtils;
+import org.sakaiproject.antivirus.api.VirusFoundException;
 import org.sakaiproject.api.app.postem.data.Gradebook;
 import org.sakaiproject.api.app.postem.data.GradebookManager;
 import org.sakaiproject.api.app.postem.data.StudentGrades;
+import org.sakaiproject.authz.api.SecurityAdvisor;
+import org.sakaiproject.authz.api.SecurityService;
+import org.sakaiproject.authz.api.SecurityAdvisor.SecurityAdvice;
+import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.content.api.ContentCollectionEdit;
+import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.ContentResource;
+import org.sakaiproject.content.api.ContentResourceEdit;
+import org.sakaiproject.content.api.ContentResourceFilter;
 import org.sakaiproject.content.api.FilePickerHelper;
-import org.sakaiproject.content.cover.ContentHostingService;
-import org.sakaiproject.content.tool.CopyrightDelegate;
-import org.sakaiproject.content.tool.ResourcesAction;
+import org.sakaiproject.content.api.ResourceToolAction;
+import org.sakaiproject.content.api.ResourceType;
+import org.sakaiproject.entity.api.Entity;
 import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.entity.api.ResourceProperties;
 import org.sakaiproject.entity.api.ResourcePropertiesEdit;
 import org.sakaiproject.entity.cover.EntityManager;
 import org.sakaiproject.event.api.SessionState;
 import org.sakaiproject.event.cover.NotificationService;
+import org.sakaiproject.exception.IdInvalidException;
 import org.sakaiproject.exception.IdLengthException;
 import org.sakaiproject.exception.IdUniquenessException;
 import org.sakaiproject.exception.IdUnusedException;
+import org.sakaiproject.exception.IdUsedException;
+import org.sakaiproject.exception.InconsistentException;
 import org.sakaiproject.exception.OverQuotaException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.exception.ServerOverloadException;
@@ -66,6 +81,7 @@ import org.sakaiproject.user.api.UserNotDefinedException;
 import org.sakaiproject.util.Validator;
 import org.sakaiproject.postem.helpers.CSV;
 import org.sakaiproject.site.cover.SiteService;
+import org.sakaiproject.content.api.ContentHostingService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -94,6 +110,18 @@ public class PostemSakaiService  {
 	
 	private static final String COMMA_DELIM_STR = "comma";
 	private static final String TAB_DELIM_STR = "tab";
+
+	protected static final String FILE_UPLOAD_MAX_SIZE = "20";
+	protected static final String STATE_CONTENT_SERVICE = "DbContentService";
+	/** The name of the state attribute containing the name of the tool that invoked Resources as attachment helper */
+	protected static final String PREFIX = "filepicker.";
+	public static final String STATE_ATTACH_TOOL_NAME = PREFIX + "attach_tool_name";
+	protected static final String STATE_ATTACHMENT_FILTER = PREFIX + "attachment_filter";
+	protected static final String STATE_ADDED_ITEMS = PREFIX + "added_items";
+	
+	/** kernel api **/
+	private static SecurityService securityService  = ComponentManager.get(SecurityService.class);
+	private static ToolManager toolManager = ComponentManager.get(ToolManager.class);
 	
 	@Inject
 	private SessionManager sessionManager;
@@ -103,6 +131,9 @@ public class PostemSakaiService  {
 	
 	@Inject
 	private GradebookManager gradebookManager;
+	
+	@Inject
+	private ContentHostingService contentHostingService;
 
 	public ArrayList getGradebooks(String sortBy, boolean ascending) {
 		if (userId == null) {
@@ -293,6 +324,10 @@ public class PostemSakaiService  {
 			// this.release = null;
 			return PostemToolConstants.PERMISSION_ERROR;
 		}
+		
+		ToolSession toolSession = sessionManager.getCurrentToolSession();
+		String fileId = (String) toolSession.getAttribute("Test01");
+		System.out.println("|--------------> " + fileId + " from processCreate ");
 		
 		if (gradebook.getId() == null) {
 			ArrayList gb = getGradebooks();
@@ -582,126 +617,131 @@ public class PostemSakaiService  {
 	  }
 	  
 	  public String doDragDropUpload (MultipartFile file, HttpServletRequest request) {
-		  
-			String uploadFileName=null;
-			String resourceId = null;
-			String collectionName=null;
-			String overwrite = request.getParameter("overwrite");
-			SessionState state = getState(request);
+		 
 			ToolSession toolSession = sessionManager.getCurrentToolSession();
-			
-			String resourceGroup = toolSession.getAttribute("resources.request.create_wizard_collection_id").toString();
-			
+			String max_file_size_mb = FILE_UPLOAD_MAX_SIZE;
+			long max_bytes = 1024L * 1024L;
 			try
 			{
-				//Upload the received file
-				//Test that file has been sent in request 
-				org.apache.commons.fileupload.FileItem uploadFile = (org.apache.commons.fileupload.FileItem) request.getAttribute("file");
-				
-				if(uploadFile != null)
-				{
-					String contentType = uploadFile.getContentType();
-					uploadFileName=uploadFile.getName();
-					
-					String extension = "";
-					String basename = uploadFileName.trim();
-					if (uploadFileName.contains(".")) {
-						String[] parts = uploadFileName.split("\\.");
-						basename = parts[0];
-						if (parts.length > 1) {
-							extension = parts[parts.length - 1];
-						}
-						for (int i = 1; i < parts.length - 1; i++) {
-							basename += "." + parts[i];
-						}
-					}
-
-						//Method getUniqueFileName was added to change external name of uploaded resources if they exist already in the collection, just the same way that their internal id.
-						//However, that is not the way Resources tool works. Internal id is changed but external name is the same for every copy of the same file.
-						//So I disable this method call, though it can be enabled again if desired.
-						
-						//String resourceName = getUniqueFileName(uploadFileName, resourceGroup);
-						resourceId = resourceGroup + uploadFileName;
-						try{
-							//check if resource exists
-							ContentHostingService.getResource(resourceId);
-							//if it does and overwrite is true save the latest copy
-							if(overwrite != null && overwrite.equals("true")){
-								resource = ContentHostingService.editResource(resourceId);
-							}
-							// if no overwrite then simply create a new resource
-							else{
-								resource = ContentHostingService.addResource(resourceGroup, Validator.escapeResourceName(basename), Validator.escapeResourceName(extension), ResourcesAction.MAXIMUM_ATTEMPTS_FOR_UNIQUENESS);
-							}
-						}
-						// if new resource then save
-						catch(IdUnusedException idUnusedException) {
-							log.debug("Adding resource {} in current folder ({})", uploadFileName, resourceGroup);
-							resource = ContentHostingService.addResource(resourceGroup, Validator.escapeResourceName(basename), Validator.escapeResourceName(extension), ResourcesAction.MAXIMUM_ATTEMPTS_FOR_UNIQUENESS);
-						}
-
-
-					if (resource != null)
-					{
-						if (contentType!=null) resource.setContentType(contentType);
-						
-						ResourcePropertiesEdit resourceProps = resource.getPropertiesEdit();
-						resourceProps.addProperty(ResourcePropertiesEdit.PROP_DISPLAY_NAME, uploadFileName);
-
-						CopyrightDelegate copyrightDelegate = new CopyrightDelegate();
-						copyrightDelegate.captureCopyright(params);
-						copyrightDelegate.setCopyrightOnEntity(resourceProps);
-
-						resource.setContent(uploadFile.getInputStream());
-						resource.setContentType(contentType);
-						resource.setAvailability(hidden, null, null);
-						ContentHostingService.commitResource(resource, NotificationService.NOTI_NONE);
-						
-						if (collection != null){
-							collection.setAvailability(hidden, null, null);
-							ContentHostingService.commitCollection(collection);
-							log.debug("Collection commited: {}", collection.getId());
-						}
-					}
-					else
-					{
-						addAlert(state, contentResourceBundle.getFormattedMessage("dragndrop.upload.error",new Object[]{uploadFileName}));
-						return;
-					}
-				}
-				else
-				{
-					addAlert(state, contentResourceBundle.getFormattedMessage("dragndrop.upload.error",new Object[]{uploadFileName}));
-					return;
-				}
+				max_bytes = Long.parseLong(max_file_size_mb) * 1024L * 1024L;
 			}
-			catch (IdUniquenessException e)
+			catch(Exception e)
 			{
-				//addAlert(state,contentResourceBundle.getFormattedMessage("dragndrop.duplicated.error",new Object[]{uploadFileName,ResourcesAction.MAXIMUM_ATTEMPTS_FOR_UNIQUENESS}));
-				return e.toString();
+				// if unable to parse an integer from the value
+				// in the properties file, use 1 MB as a default
+				max_file_size_mb = "1";
+				max_bytes = 1024L * 1024L;
 			}
-			catch (OverQuotaException e) {
-				//addAlert(state, rb.getString("alert.over-site-upload-quota"));
-				return e.toString();
+			
+			if(file == null)
+			{
+				// "The user submitted an empty file
+				return "empty_file";
 			}
-			catch (ServerOverloadException e) {
-				//addAlert(state,contentResourceBundle.getFormattedMessage("dragndrop.overload.error",new Object[]{uploadFileName}));
-				return  e.toString();
+			
+			if (file.isEmpty()) {
+				return "file_empty";
 			}
-			catch (IdLengthException e) {
-				//addAlert(state, contentResourceBundle.getFormattedMessage("dragndrop.length.error", e.getReference(), e.getLimit()));
-				return  e.toString();
+
+			else if (file.getResource().getFilename() == null || file.getResource().getFilename().length() == 0)
+			{
+				return "Please choose the file to attach.";
 			}
-			catch (Exception e) {
-				//addAlert(state, contentResourceBundle.getFormattedMessage("dragndrop.upload.error",new Object[]{uploadFileName}));
-				log.warn("Drag and drop upload failed: {}", e);
-				return e.toString();
+			else if (file.getResource().getFilename().length() > 0)
+			{
+				String fileName = FilenameUtils.getName(file.getResource().getFilename());
+				InputStream fileContentStream = null;
+				try {
+					fileContentStream = file.getInputStream();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				
+				// Store contentLength as long for future-proofing, though in many cases this
+				// may simply be -1 (unknown), so the length check is of limited use
+				long contentLength = file.getSize();
+				String contentType = file.getContentType();
+
+				if(contentLength >= max_bytes)
+				{
+					return "file_too_big";
+				}
+				else if(fileContentStream != null)
+				{
+			        SecurityAdvisor advisor = new SecurityAdvisor() {
+			            public SecurityAdvice isAllowed(String userId, String function, String reference) {
+			                return SecurityAdvice.ALLOWED;
+			            }
+			        };
+			        securityService.pushAdvisor(advisor);
+			        try {
+						String siteId = toolManager.getCurrentPlacement().getContext();
+						String toolName = toolManager.getCurrentPlacement().getTitle();
+						//String id = toolSession.getPlacementId();
+			            String collection = Entity.SEPARATOR + "attachment" + Entity.SEPARATOR + siteId + Entity.SEPARATOR + toolName + Entity.SEPARATOR;
+			            int lastIndexOf = fileName.lastIndexOf("/");
+			            if (lastIndexOf != -1 && (fileName.length() > lastIndexOf + 1)) {
+			                fileName = fileName.substring(lastIndexOf + 1);
+			            }
+			            String suffix = "";
+			            String finalFileName = "";
+			            lastIndexOf = fileName.lastIndexOf(".");
+			            if (lastIndexOf != -1 && (fileName.length() > lastIndexOf + 1)) {
+			                suffix = fileName.substring(lastIndexOf + 1);
+			                finalFileName = fileName.substring(0, lastIndexOf);
+			            }
+			            try {
+			                contentHostingService.checkCollection(collection);
+			            } catch (Exception e) {
+			                // add this collection
+			                ContentCollectionEdit toolEdit = contentHostingService.addCollection(collection);
+			                contentHostingService.commitCollection(toolEdit);
+			            }
+			            ContentResourceEdit edit = contentHostingService.addResource(collection, finalFileName, suffix, 99999);
+			            edit.setContent(fileContentStream);
+			            contentHostingService.commitResource(edit, NotificationService.NOTI_NONE);
+			            //return edit.getUrl(true);
+			        } catch (Exception e) {
+			            log.error("Failed to store file.", e);
+			            return null;
+			        } finally {
+			            securityService.popAdvisor(advisor);
+			        }
+					
+				}
+				
 			}
+		  toolSession.setAttribute("Test01", "Test01");
+		  String fileId = (String) toolSession.getAttribute("Test01");
+		  System.out.println("|--------------> " + fileId + " from doDragDropUpload ");
+		  return "ok";
 	  }
 
-  
-  
-  
+	/**
+	 * Establish a security advisor to allow the "embedded" azg work to occur
+	 * with no need for additional security permissions.
+	 */
+	protected void enableSecurityAdvisor()
+	{
+	  // put in a security advisor so we can create citationAdmin site without need
+	  // of further permissions
+	  securityService.pushAdvisor(new SecurityAdvisor() {
+	    public SecurityAdvice isAllowed(String userId, String function, String reference)
+	    {
+	      return SecurityAdvice.ALLOWED;
+	    }
+	  });
+	}
+	
+    /**
+     * remove all security advisors
+     */
+    protected void disableSecurityAdvisors()
+    {
+    	// remove all security advisors
+    	securityService.popAdvisor();
+    }
 
   
 
