@@ -192,6 +192,42 @@ sakai-grader {
         display: inline-block;
       }
     }
+
+    #grader-submission-history-wrapper {
+      border: black solid 1px;
+      border-radius: 5px;
+      padding: 5px;
+      margin-top: 20px;
+
+      #grader-submission-history-toggle {
+        margin: 3px 0px 3px 10px;
+        a {
+          text-decoration: none;
+          font-weight: bold;
+        }
+      }
+
+      #grader-submission-history {
+        margin-left: 5px;
+        h4 { font-size: 13px; margin-top: 15px;}
+        .grader-history-title {
+          font-weight: bold;
+          margin-top: 10px;
+          a {
+          }
+        }
+        .grader-history-block {
+          margin-left: 5px;
+          div,p {
+            font-size: 12px;
+            margin-bottom: 10px;
+          }
+        }
+        #grader-history-grades-wrapper {
+          border-top: 1px black solid;
+        }
+      }
+    }
   }
 
   .submitted-block, .feedback-attachments-block {
@@ -233,12 +269,32 @@ sakai-grader {
       }
     }
 
-    sakai-file-picker {
-      margin-left: 10px;
+    sakai-grader-file-picker {
 
       .sakai-file-picker-list {
-        margin-top: 5px;
-        padding-left: 10px;
+        margin-top: calc(#{$standard-spacing} / 4);
+        padding-left: calc(#{$standard-spacing} / 2);
+        .sakai-file-picker-list-title {
+          margin-bottom: calc(#{$standard-spacing} / 4);
+          font-style: italic;
+        }
+        .file-row {
+          display: flex;
+          width: 100%;
+          padding: calc(#{$standard-spacing} / 4);
+          margin-bottom: calc(#{$standard-spacing} / 4);
+          margin-left: calc(#{$standard-spacing} / 2);
+
+          .file {
+            flex: 2 75%;
+            margin-right: calc(#{$standard-spacing} / 4);
+            overflow-wrap: anywhere;
+          }
+          .file-remove {
+            display: flex;
+            flex: 1 25%;
+          }
+        }
       }
     }
   }

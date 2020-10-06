@@ -61,7 +61,7 @@ import org.sakaiproject.api.app.messageforums.ui.DiscussionForumManager;
 import org.sakaiproject.api.app.messageforums.ui.UIPermissionsManager;
 import org.sakaiproject.authz.api.Member;
 import org.sakaiproject.authz.api.SecurityService;
-import org.sakaiproject.component.app.messageforums.MembershipItem;
+import org.sakaiproject.api.app.messageforums.MembershipItem;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.event.api.EventTrackingService;
@@ -371,6 +371,7 @@ public class MessageForumStatisticsBean {
 	private static final String FORUM_TITLE = "forumTitle";
 
 	private static final String MESSAGECENTER_BUNDLE = "org.sakaiproject.api.app.messagecenter.bundle.Messages";
+	private static final ResourceLoader rb = new ResourceLoader(MESSAGECENTER_BUNDLE);
 
 	private static final String FORUM_STATISTICS = "dfStatisticsList";
 	private static final String FORUM_STATISTICS_BY_ALL_TOPICS = "dfStatisticsListByAllTopics";
@@ -2212,14 +2213,11 @@ public class MessageForumStatisticsBean {
 		this.buttonUserName = buttonUserName;
 	}
 
-	public static String getResourceBundleString(String key) 
-	{
-		final ResourceLoader rb = new ResourceLoader(MESSAGECENTER_BUNDLE);
+	public static String getResourceBundleString(String key) {
 		return rb.getString(key);
 	}
 
 	public static String getResourceBundleString(String key, Object[] args) {
-		final ResourceLoader rb = new ResourceLoader(MESSAGECENTER_BUNDLE);
 		return rb.getFormattedMessage(key, args);
 	}
 
@@ -2309,8 +2307,13 @@ public class MessageForumStatisticsBean {
 				String anonId = userIdToAnonIdMap.get(u.getId());
 				if (anonId != null)
 				{
-					item.setName(anonId);
-					list.add(item);
+					list.add(MembershipItem.makeMembershipItem(
+							anonId,
+							item.getType(),
+							item.getGroup(),
+							item.getRole(),
+							item.getUser(),
+							item.isViewable()));
 				}
 			}
 		}
@@ -3107,6 +3110,6 @@ public class MessageForumStatisticsBean {
 		// return false
 
 		// Condenses to:
-		return topic.getPostAnonymous() && (!topic.getRevealIDsToRoles() || !uiPermissionsManager.isIdentifyAnonAuthors(topic));
+		return topic.getPostAnonymous() && (!topic.getRevealIDsToRoles() || !uiPermissionsManager.isIdentifyAnonAuthors((DiscussionTopic) topic));
 	}
 }

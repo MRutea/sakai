@@ -22,7 +22,22 @@
 package org.sakaiproject.site.impl;
 
 import java.io.PrintWriter;
-import java.util.*;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.Properties;
+import java.util.Set;
+import java.util.Stack;
+import java.util.Vector;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import javax.servlet.http.HttpServletRequest;
@@ -55,7 +70,6 @@ import org.sakaiproject.memory.api.Cache;
 import org.sakaiproject.memory.api.MemoryService;
 import org.sakaiproject.site.api.*;
 import org.sakaiproject.thread_local.api.ThreadLocalManager;
-import org.sakaiproject.time.api.Time;
 import org.sakaiproject.time.api.TimeService;
 import org.sakaiproject.tool.api.ActiveToolManager;
 import org.sakaiproject.tool.api.SessionManager;
@@ -254,7 +268,7 @@ public abstract class BaseSiteService implements SiteService, Observer
 		String current = sessionManager().getCurrentSessionUserId();
 
 		site.m_lastModifiedUserId = current;
-		site.m_lastModifiedTime = timeService().newTime();
+		site.m_lastModifiedTime = Instant.now();
 	}
 
 	/**
@@ -267,9 +281,9 @@ public abstract class BaseSiteService implements SiteService, Observer
 		site.m_createdUserId = current;
 		site.m_lastModifiedUserId = current;
 
-		Time now = timeService().newTime();
-		site.m_createdTime = now;
-		site.m_lastModifiedTime = (Time) now.clone();
+
+		site.m_createdTime = Instant.now();
+		site.m_lastModifiedTime = Instant.now();
 	}
 
 	/**
@@ -1174,7 +1188,7 @@ public abstract class BaseSiteService implements SiteService, Observer
 		}
 
 		String currentUser = sessionManager().getCurrentSessionUserId();
-		Time lastModifiedTime = timeService().newTime();
+		Instant lastModifiedTime = Instant.now();
 
 		// complete the edit
 		storage().unpublish(siteIds, currentUser, lastModifiedTime);
@@ -2511,7 +2525,8 @@ public abstract class BaseSiteService implements SiteService, Observer
 			Site site = getSite(ref.getId());
 			rv = rb.getFormattedMessage("entdsc.sit_usr", new Object[]{
 					site.getTitle() + " (" + site.getId() + ")",
-					site.getCreatedTime().toStringLocalFull(),
+					//TODO UserTimeService?
+					site.getCreatedDate(),
 					site.getCreatedBy().getDisplayName() + " (" + site.getCreatedBy().getDisplayId() + ")",
 					StringUtil.limit((site.getDescription() == null ? "" : site.getDescription()), 30)});
 		}
@@ -3044,7 +3059,7 @@ public abstract class BaseSiteService implements SiteService, Observer
 		 * @param modifiedOn
 		 *        Time that the site is unpublished
 		 */
-		public void unpublish(List<String> siteIds, String modifiedBy, Time modifiedOn);
+		public void unpublish(List<String> siteIds, String modifiedBy, Instant modifiedOn);
 
 		/**
 		 * Writes site properties
