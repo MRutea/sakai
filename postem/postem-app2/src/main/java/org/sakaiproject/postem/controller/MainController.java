@@ -16,17 +16,26 @@
 package org.sakaiproject.postem.controller;
 
 import java.util.List;
+import java.util.Locale;
+
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.sakaiproject.api.app.postem.data.Gradebook;
 import org.sakaiproject.api.app.postem.data.GradebookManager;
 import org.sakaiproject.postem.constants.PostemToolConstants;
 import org.sakaiproject.postem.service.PostemSakaiService;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.tool.cover.ToolManager;
+import org.sakaiproject.user.api.PreferencesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.support.RequestContextUtils;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -35,20 +44,33 @@ public class MainController {
 
     @Autowired
     private PostemSakaiService postemSakaiService;
-    
-	@Inject
-	private SessionManager sessionManager;
 	
 	@Inject
 	private GradebookManager gradebookManager;
 	
+    @Autowired
+    private SessionManager sessionManager;
+    
+    @Autowired
+    private PreferencesService preferencesService;
+	
 	private static final int TITLE_MAX_LENGTH = 255;
 
     @RequestMapping(value = {"/", "/index"})
-    public String showIndex(Model model) {
+    public String showIndex(Model model, HttpServletRequest request, HttpServletResponse response) {
         log.debug("showIndex()");
         
-		String userId = sessionManager.getCurrentSessionUserId();
+        Locale.setDefault(Locale.US);
+        String userId = sessionManager.getCurrentSessionUserId();
+        Locale loc = null;
+        if (userId!=null) {
+            loc = preferencesService.getLocale(userId);
+        } else {
+            loc = Locale.US;
+        }
+
+        LocaleResolver localeResolver = RequestContextUtils.getLocaleResolver(request);
+        localeResolver.setLocale(request, response, loc);
 		
 		List<Gradebook> gradebooksList = postemSakaiService.getGradebooks(Gradebook.SORT_BY_TITLE, true);
 		
