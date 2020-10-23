@@ -69,14 +69,6 @@ public class ThymeleafConfig extends WebMvcConfigurerAdapter implements Applicat
         return viewResolver;
     }
 
-    @Bean
-    public MultipartResolver multipartResolver() {
-        CommonsMultipartResolver commonsMultipartResolver = new CommonsMultipartResolver();
-        commonsMultipartResolver.setMaxUploadSize(100000);
-        commonsMultipartResolver.setDefaultEncoding("UTF-8");
-        return commonsMultipartResolver;
-    }
-
     private ISpringTemplateEngine templateEngine() {
         SpringTemplateEngine templateEngine = new SpringTemplateEngine();
         templateEngine.setEnableSpringELCompiler(true);
@@ -95,22 +87,8 @@ public class ThymeleafConfig extends WebMvcConfigurerAdapter implements Applicat
     }
     
     @Bean
-   	public LocaleResolver localeResolver() {
-   	    SessionLocaleResolver slr = new SessionLocaleResolver();
-   	    slr.setDefaultLocale(Locale.US);
-   	    return slr;
-   	}
-       
-    @Bean
-   	public LocaleChangeInterceptor localeChangeInterceptor() {
-   	    LocaleChangeInterceptor lci = new LocaleChangeInterceptor();
-   	    lci.setParamName("lang");
-   	    return lci;
-   	}
-       
-    @Override
-   	public void addInterceptors(InterceptorRegistry registry) {
-   	    registry.addInterceptor(localeChangeInterceptor());
-   	}
+    public LocaleResolver localeResolver() {
+        return new SessionLocaleResolver();
+    }
 
 }

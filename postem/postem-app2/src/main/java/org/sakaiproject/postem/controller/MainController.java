@@ -60,17 +60,16 @@ public class MainController {
     public String showIndex(Model model, HttpServletRequest request, HttpServletResponse response) {
         log.debug("showIndex()");
         
-        Locale.setDefault(Locale.US);
         String userId = sessionManager.getCurrentSessionUserId();
-        Locale loc = null;
-        if (userId!=null) {
-            loc = preferencesService.getLocale(userId);
+        Locale locale = null;
+        if (userId != null) {
+            locale = preferencesService.getLocale(userId);
         } else {
-            loc = Locale.US;
+        	locale = Locale.getDefault();
         }
 
         LocaleResolver localeResolver = RequestContextUtils.getLocaleResolver(request);
-        localeResolver.setLocale(request, response, loc);
+        localeResolver.setLocale(request, response, locale);
 		
 		List<Gradebook> gradebooksList = postemSakaiService.getGradebooks(Gradebook.SORT_BY_TITLE, true);
 		
