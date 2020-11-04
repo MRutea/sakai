@@ -451,7 +451,11 @@ public class SubmitToGradingActionListener implements ActionListener {
 		
 		adata.setSubmitFromTimeoutPopup(delivery.isSubmitFromTimeoutPopup());
 		adata.setIsLate(isLate(publishedAssessment, delivery.isSubmitFromTimeoutPopup(), adata.getAgentId()));
-		adata.setForGrade(delivery.isForGrade());
+
+		// If this AG record was updated by a background timer, dont overwrite the FORGRADE val with a bad val
+		if (Boolean.FALSE.equals(adata.getForGrade())) {
+			adata.setForGrade(delivery.isForGrade());
+		}
 		
 		// If this assessment grading data has been updated (comments or adj. score) by grader and then republic and allow student to resubmit
 		// when the student submit his answers, we update the status back to 0 and remove the grading entry/info.
@@ -728,7 +732,7 @@ public class SubmitToGradingActionListener implements ActionListener {
 						adds.add(itemgrading);
 				    }	
 				}
-				else if (StringUtils.isNotBlank(s)) {
+				else if (s != null) {
 					log.debug("New Itemgrading with AnswerText = {}", s);
 					// Change to allow student submissions in rich-text [SAK-17021]
 					itemgrading.setAnswerText(s);
