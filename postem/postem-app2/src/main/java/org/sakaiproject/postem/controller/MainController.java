@@ -35,6 +35,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.support.RequestContextUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -61,13 +62,7 @@ public class MainController {
         log.debug("showIndex()");
         
         String userId = sessionManager.getCurrentSessionUserId();
-        Locale locale = null;
-        if (userId != null) {
-            locale = preferencesService.getLocale(userId);
-        } else {
-        	locale = Locale.getDefault();
-        }
-
+        final Locale locale = StringUtils.isNotBlank(userId) ? preferencesService.getLocale(userId) : Locale.getDefault();
         LocaleResolver localeResolver = RequestContextUtils.getLocaleResolver(request);
         localeResolver.setLocale(request, response, locale);
 		
