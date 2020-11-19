@@ -125,6 +125,7 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService implemen
 	 * and role to provided
 	 */
 	protected boolean m_promoteUsersToProvided = true;
+	protected boolean m_promoteUsersToProvidedRole = false;
 	private MemoryService m_memoryService;
 	// KNL-600 CACHING for the realm role groups
 	private Cache m_realmRoleGRCache;
@@ -227,6 +228,18 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService implemen
 	public void setPromoteUsersToProvided(boolean promoteUsersToProvided)
 	{
 		m_promoteUsersToProvided = promoteUsersToProvided;
+	}
+
+	/**
+	 * Configuration: Whether or not to automatically promote non-provided users with same status
+	 * to their provided role
+	 *
+	 * @param promoteUsersToProvidedRole
+	 * 	'true' to promote non-provided users to their provided role, 'false' to maintain their non-provided status or to prevent a role change
+	 */
+	public void setPromoteUsersToProvidedRole(boolean promoteUsersToProvidedRole)
+	{
+		m_promoteUsersToProvidedRole = promoteUsersToProvidedRole;
 	}
 	
 	public void setRefreshTaskInterval(long refreshTaskInterval) {
@@ -334,6 +347,7 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService implemen
 	{
 		DbStorage storage = new DbStorage(entityManager(), siteService);
 		storage.setPromoteUsersToProvided(m_promoteUsersToProvided);
+		storage.setPromoteUsersToProvidedRole(m_promoteUsersToProvidedRole);
 		return storage;
 
 	} // newStorage
@@ -751,6 +765,7 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService implemen
 		private static final String REALM_USER_GRANTS_CACHE = "REALM_USER_GRANTS_CACHE";
 		private static final String REALM_ROLES_CACHE = "REALM_ROLES_CACHE";
 		private boolean promoteUsersToProvided = true;
+		private boolean promoteUsersToProvidedRole = false;
 		private EntityManager entityManager;
 		private SiteService siteService;
 
@@ -780,6 +795,16 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService implemen
 		 */
 		public void setPromoteUsersToProvided(boolean promoteUsersToProvided) {
 			this.promoteUsersToProvided = promoteUsersToProvided;
+		}
+
+		/**
+		 * Configure whether or not users with same status will be "promoted" to their provided role.
+		 *
+		 * @param promoteUsersToProvidedRole Whether or not to promote non-provided users to their provided role
+		 * with no consideration of whether the role is identical.
+		 */
+		public void setPromoteUsersToProvidedRole(boolean promoteUsersToProvidedRole) {
+			this.promoteUsersToProvidedRole = promoteUsersToProvidedRole;
 		}
 
 		public boolean check(String id)
@@ -2917,7 +2942,7 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService implemen
 						String userEid = userDirectoryService().getUserEid(userId);
 						String targetRole = (String) target.get(userEid);
 
-						if (role.equals(targetRole))
+						if (promoteUsersToProvidedRole || role.equals(targetRole))
 						{
 							// remove from non-provided and add as provided
 							toDelete.add(userId);

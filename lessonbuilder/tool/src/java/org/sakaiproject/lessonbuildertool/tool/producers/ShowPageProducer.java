@@ -156,6 +156,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 	private ToolManager toolManager;
 	public TextInputEvolver richTextEvolver;
 	private static LessonBuilderAccessService lessonBuilderAccessService;
+	DateFormat df = DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT, new ResourceLoader().getLocale());;
 	
 	private List<Long> printedSubpages;
 	
@@ -1261,11 +1262,12 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			boolean forceButtonColor = false;
 			String color = null;
 			for (SimplePageItem i : itemList) {
-				
-				//If the content is not released or is hidden will not be rendered on the page
-				boolean isContentAvailable = contentHostingService.isAvailable(String.valueOf(i.getSakaiId()));
-				if(!isContentAvailable) {
-					continue;
+
+				//If the content MULTIMEDIA, type 7, is not released or is hidden will not be rendered on the view
+				if (i.getType() == SimplePageItem.MULTIMEDIA) {
+				    if (!contentHostingService.isAvailable(String.valueOf(i.getSakaiId()))) {
+				        continue;
+				    }
 				}
 				
 				// break is not a normal item. handle it first
@@ -1958,16 +1960,16 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 
 					if (mmDisplayType == null && simplePageBean.isImageType(i)) {
 						// a wide default for images would produce completely wrong effect
-					    	if (widthSt != null && !widthSt.equals("")) 
+					    	if (StringUtils.isNotBlank(widthSt))
 						    width = new Length(widthSt);
-					} else if (widthSt == null || widthSt.equals("")) {
+					} else if (StringUtils.isBlank(widthSt)) {
 						width = new Length(DEFAULT_WIDTH);
 					} else {
 						width = new Length(widthSt);
 					}
 
 					Length height = null;
-					if (i.getHeight() != null) {
+					if (StringUtils.isNotBlank(i.getHeight())) {
 						height = new Length(i.getHeight());
 					}
 
@@ -3175,7 +3177,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 							itemGroupTitles = "[" + itemGroupTitles + "]";
 						}
 						if (canEditPage) {
-							UIOutput.make(tableRow, "item-groups", itemGroupString);
+							UIOutput.make(tableRow, "calendar-item-groups", itemGroupString);
 							String name = i.getName()!= null ? i.getName() : "" ;
 							UIOutput.make(tableRow, "calendar-name", name);
 							String description = i.getDescription()!= null ? i.getDescription() : "" ;
@@ -4014,15 +4016,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			ID = ID + "-fake";
 			String linkText = i.getName();
 			if (i.getType() == SimplePageItem.ASSIGNMENT) {
-				SecurityAdvisor yesMan = (String arg0, String arg1, String agr2) -> SecurityAdvisor.SecurityAdvice.ALLOWED;
-				securityService.pushAdvisor(yesMan);
-				try {
-					AssignmentEntity assignment = (AssignmentEntity) assignmentEntity.getEntity(i.getSakaiId(), simplePageBean);
-					linkText += " " + messageLocator.getMessage("simplepage.assignment.open_date", new Object[] {assignment.getOpenDate()});
-				} catch (Exception ex) {}
-				finally {
-					securityService.popAdvisor(yesMan);
-				}
+				linkText = getLinkText(linkText, i.getSakaiId());
 			}
 			UIOutput link = UIOutput.make(container, ID, linkText);
 			link.decorate(new UIFreeAttributeDecorator("lessonbuilderitem", itemString));
@@ -4051,7 +4045,11 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 				link.decorate(new UITooltipDecorator(messageLocator.getMessage("simplepage.complete_required")));
 			}
 		} else {
-			UIOutput.make(container, ID + "-text", i.getName());
+			String linkText = i.getName();
+			if (i.getType() == SimplePageItem.ASSIGNMENT) {
+				linkText = getLinkText(linkText, i.getSakaiId());
+			}
+			UIOutput.make(container, ID + "-text", linkText);
 		}
 
 		if (note != null) {
@@ -4059,6 +4057,22 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		}
 
 		return available;
+	}
+
+	
+	private String getLinkText(String linkText, String sakaiId ) {
+		//Create a link with open and due dates for assignments links in Lessons
+		SecurityAdvisor yesMan = (String arg0, String arg1, String agr2) -> SecurityAdvisor.SecurityAdvice.ALLOWED;
+		securityService.pushAdvisor(yesMan);
+		try {
+			AssignmentEntity assignment = (AssignmentEntity) assignmentEntity.getEntity(sakaiId, simplePageBean);		
+			linkText += " " + messageLocator.getMessage("simplepage.assignment.open_close_date", 
+					new Object[] {df.format(assignment.getOpenDate()), df.format(assignment.getDueDate())});
+		} catch (Exception ex) {}
+		finally {
+			securityService.popAdvisor(yesMan);
+		}
+		return linkText;
 	}
 
 	private static String getUserDisplayName(String owner) {
