@@ -18,13 +18,12 @@ package org.sakaiproject.postem.controller;
 import java.util.List;
 import java.util.Locale;
 
-import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.sakaiproject.api.app.postem.data.Gradebook;
-import org.sakaiproject.api.app.postem.data.GradebookManager;
 import org.sakaiproject.postem.constants.PostemToolConstants;
+import org.sakaiproject.postem.form.GradebookForm;
 import org.sakaiproject.postem.service.PostemSakaiService;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.tool.cover.ToolManager;
@@ -46,16 +45,11 @@ public class MainController {
     @Autowired
     private PostemSakaiService postemSakaiService;
 	
-	@Inject
-	private GradebookManager gradebookManager;
-	
     @Autowired
     private SessionManager sessionManager;
     
     @Autowired
     private PreferencesService preferencesService;
-	
-	private static final int TITLE_MAX_LENGTH = 255;
 
     @RequestMapping(value = {"/", "/index"})
     public String showIndex(Model model, HttpServletRequest request, HttpServletResponse response) {
@@ -86,8 +80,10 @@ public class MainController {
 		String userId = sessionManager.getCurrentSessionUserId();
 		String siteId = ToolManager.getCurrentPlacement().getContext();
 		Gradebook currentGradebook = postemSakaiService.createEmptyGradebook(userId, siteId);
-		currentGradebook.setTitle("");
+		currentGradebook.setTitle("xxxxxxxx");
 		currentGradebook.setReleased(false);
+		GradebookForm gradebookForm = new GradebookForm();
+  		model.addAttribute("gradebookForm", gradebookForm);
   		model.addAttribute("gradebook", currentGradebook);
         return PostemToolConstants.ADD_ITEM;
     }

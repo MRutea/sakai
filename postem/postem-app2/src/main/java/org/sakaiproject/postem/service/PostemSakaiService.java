@@ -303,13 +303,123 @@ public class PostemSakaiService  {
     StudentGrades selStudent = gradebookManager.getStudentByGBAndUsername(currentGradebook, selectedStudent);
     return selStudent;
   }
+
+  public String doDragDropUpload (MultipartFile file, HttpServletRequest request) {
+		 
+		ToolSession toolSession = sessionManager.getCurrentToolSession();
+		String max_file_size_mb = FILE_UPLOAD_MAX_SIZE;
+		long max_bytes = 1024L * 1024L;
+		String fileName = "";
+		
+		try
+		{
+			max_bytes = Long.parseLong(max_file_size_mb) * 1024L * 1024L;
+		}
+		catch(Exception e)
+		{
+			// if unable to parse an integer from the value
+			// in the properties file, use 1 MB as a default
+			max_file_size_mb = "1";
+			max_bytes = 1024L * 1024L;
+		}
+		
+		if(file == null)
+		{
+			// "The user submitted an empty file
+			return "empty_file";
+		}
+		
+		if (file.isEmpty()) {
+			return "file_empty";
+		}
+		else if (file.getResource().getFilename() == null || file.getResource().getFilename().length() == 0)
+		{
+			return "Please choose the file to attach.";
+		}
+		else if (file.getResource().getFilename().length()  > TITLE_MAX_LENGTH) 
+		{
+			return PostemToolConstants.TITLE_TOO_LONG;
+		}
+		else if (file.getResource().getFilename().length() > 0)
+		{
+			fileName = FilenameUtils.getName(file.getResource().getFilename());
+			InputStream fileContentStream = null;
+			try {
+				fileContentStream = file.getInputStream();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+			// Store contentLength as long for future-proofing, though in many cases this
+			// may simply be -1 (unknown), so the length check is of limited use
+			long contentLength = file.getSize();
+			String contentType = file.getContentType();
+
+			if(contentLength >= max_bytes)
+			{
+				return "file_too_big";
+			}
+			else if(fileContentStream != null)
+			{
+		        SecurityAdvisor advisor = new SecurityAdvisor() {
+		            public SecurityAdvice isAllowed(String userId, String function, String reference) {
+		                return SecurityAdvice.ALLOWED;
+		            }
+		        };
+		        securityService.pushAdvisor(advisor);
+		        try {
+					String siteId = toolManager.getCurrentPlacement().getContext();
+					String toolName = toolManager.getCurrentPlacement().getTitle();
+					//String id = toolSession.getPlacementId();
+		            String collection = Entity.SEPARATOR + "attachment" + Entity.SEPARATOR + siteId + Entity.SEPARATOR + toolName + Entity.SEPARATOR;
+		            int lastIndexOf = fileName.lastIndexOf("/");
+		            if (lastIndexOf != -1 && (fileName.length() > lastIndexOf + 1)) {
+		                fileName = fileName.substring(lastIndexOf + 1);
+		            }
+		            String suffix = "";
+		            String finalFileName = "";
+		            lastIndexOf = fileName.lastIndexOf(".");
+		            if (lastIndexOf != -1 && (fileName.length() > lastIndexOf + 1)) {
+		                suffix = fileName.substring(lastIndexOf + 1);
+		                finalFileName = fileName.substring(0, lastIndexOf);
+		            }
+		            try {
+		                contentHostingService.checkCollection(collection);
+		            } catch (Exception e) {
+		                // add this collection
+		                ContentCollectionEdit toolEdit = contentHostingService.addCollection(collection);
+		                contentHostingService.commitCollection(toolEdit);
+		            }
+		            if (collection.length() + finalFileName.length() + suffix.length() > TITLE_MAX_LENGTH) 
+		    		{
+		    			return PostemToolConstants.TITLE_TOO_LONG;
+		    		}
+		            ContentResourceEdit edit = contentHostingService.addResource(collection, finalFileName, suffix, 99999);
+		            edit.setContent(fileContentStream);
+		            contentHostingService.commitResource(edit, NotificationService.NOTI_NONE);
+		            //return edit.getUrl(true);
+		        } catch (Exception e) {
+		            log.error("Failed to store file.", e);
+		            fileName = "";
+		            return null;
+		        } finally {
+		            securityService.popAdvisor(advisor);
+		        }
+				
+			}
+			
+		}
+	  toolSession.setAttribute("file", fileName);
+	  return PostemToolConstants.RESULT_OK;
+  }
   
   public Gradebook createEmptyGradebook(String creator, String context) {
 	    Gradebook gradebook = gradebookManager.createEmptyGradebook(creator, context);
 	    return gradebook;
 	  }
   
-	public String processCreate(Gradebook gradebook) {
+  public String processCreate(Gradebook gradebook) {
 
 		try {
 			if (!this.checkAccess()) {
@@ -326,8 +436,7 @@ public class PostemSakaiService  {
 		}
 		
 		ToolSession toolSession = sessionManager.getCurrentToolSession();
-		String fileId = (String) toolSession.getAttribute("Test01");
-		System.out.println("|--------------> " + fileId + " from processCreate ");
+		String fileId = (String) toolSession.getAttribute("file");
 		
 		if (gradebook.getId() == null) {
 			ArrayList gb = getGradebooks();
@@ -353,11 +462,10 @@ public class PostemSakaiService  {
 			//todo tratar attachment
 			return PostemToolConstants.MISSING_CSV;
 		}
-		
-//		if (!this.delimiter.equals(COMMA_DELIM_STR) && !this.delimiter.equals(TAB_DELIM_STR)) {
-//			PostemTool.populateMessage(FacesMessage.SEVERITY_ERROR, "invalid_delim", new Object[] {});
-//			return "create_gradebook";
-//		}
+
+		if (1>2) {
+			return PostemToolConstants.INVALID_DELIM;
+		}
 
 //		if (attachment != null) {
 //			// logger.info("*** Non-Empty CSV!");
@@ -614,108 +722,6 @@ public class PostemSakaiService  {
 	      filePickerList.clear();
 
 	    return attachment;
-	  }
-	  
-	  public String doDragDropUpload (MultipartFile file, HttpServletRequest request) {
-		 
-			ToolSession toolSession = sessionManager.getCurrentToolSession();
-			String max_file_size_mb = FILE_UPLOAD_MAX_SIZE;
-			long max_bytes = 1024L * 1024L;
-			try
-			{
-				max_bytes = Long.parseLong(max_file_size_mb) * 1024L * 1024L;
-			}
-			catch(Exception e)
-			{
-				// if unable to parse an integer from the value
-				// in the properties file, use 1 MB as a default
-				max_file_size_mb = "1";
-				max_bytes = 1024L * 1024L;
-			}
-			
-			if(file == null)
-			{
-				// "The user submitted an empty file
-				return "empty_file";
-			}
-			
-			if (file.isEmpty()) {
-				return "file_empty";
-			}
-
-			else if (file.getResource().getFilename() == null || file.getResource().getFilename().length() == 0)
-			{
-				return "Please choose the file to attach.";
-			}
-			else if (file.getResource().getFilename().length() > 0)
-			{
-				String fileName = FilenameUtils.getName(file.getResource().getFilename());
-				InputStream fileContentStream = null;
-				try {
-					fileContentStream = file.getInputStream();
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				
-				// Store contentLength as long for future-proofing, though in many cases this
-				// may simply be -1 (unknown), so the length check is of limited use
-				long contentLength = file.getSize();
-				String contentType = file.getContentType();
-
-				if(contentLength >= max_bytes)
-				{
-					return "file_too_big";
-				}
-				else if(fileContentStream != null)
-				{
-			        SecurityAdvisor advisor = new SecurityAdvisor() {
-			            public SecurityAdvice isAllowed(String userId, String function, String reference) {
-			                return SecurityAdvice.ALLOWED;
-			            }
-			        };
-			        securityService.pushAdvisor(advisor);
-			        try {
-						String siteId = toolManager.getCurrentPlacement().getContext();
-						String toolName = toolManager.getCurrentPlacement().getTitle();
-						//String id = toolSession.getPlacementId();
-			            String collection = Entity.SEPARATOR + "attachment" + Entity.SEPARATOR + siteId + Entity.SEPARATOR + toolName + Entity.SEPARATOR;
-			            int lastIndexOf = fileName.lastIndexOf("/");
-			            if (lastIndexOf != -1 && (fileName.length() > lastIndexOf + 1)) {
-			                fileName = fileName.substring(lastIndexOf + 1);
-			            }
-			            String suffix = "";
-			            String finalFileName = "";
-			            lastIndexOf = fileName.lastIndexOf(".");
-			            if (lastIndexOf != -1 && (fileName.length() > lastIndexOf + 1)) {
-			                suffix = fileName.substring(lastIndexOf + 1);
-			                finalFileName = fileName.substring(0, lastIndexOf);
-			            }
-			            try {
-			                contentHostingService.checkCollection(collection);
-			            } catch (Exception e) {
-			                // add this collection
-			                ContentCollectionEdit toolEdit = contentHostingService.addCollection(collection);
-			                contentHostingService.commitCollection(toolEdit);
-			            }
-			            ContentResourceEdit edit = contentHostingService.addResource(collection, finalFileName, suffix, 99999);
-			            edit.setContent(fileContentStream);
-			            contentHostingService.commitResource(edit, NotificationService.NOTI_NONE);
-			            //return edit.getUrl(true);
-			        } catch (Exception e) {
-			            log.error("Failed to store file.", e);
-			            return null;
-			        } finally {
-			            securityService.popAdvisor(advisor);
-			        }
-					
-				}
-				
-			}
-		  toolSession.setAttribute("Test01", "Test01");
-		  String fileId = (String) toolSession.getAttribute("Test01");
-		  System.out.println("|--------------> " + fileId + " from doDragDropUpload ");
-		  return "ok";
 	  }
 
 	/**

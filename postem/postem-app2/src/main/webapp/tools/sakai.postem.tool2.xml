@@ -2,7 +2,7 @@
 <registration>
 	<tool id="sakai-postem-tool2"
 		title="PostEm2"
-		description="For uploading .csv formatted file to display feedback (e.g., comments, grades) to site participants.">
+		description="For posting questions, voting anonymously, and gathering results">
 		<category name="course" />
 		<category name="project" />
 	</tool>
