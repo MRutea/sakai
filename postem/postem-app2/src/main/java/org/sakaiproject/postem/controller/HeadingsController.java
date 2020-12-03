@@ -7,8 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.sakaiproject.api.app.postem.data.Gradebook;
 import org.sakaiproject.postem.constants.PostemToolConstants;
 import org.sakaiproject.postem.service.PostemSakaiService;
@@ -21,12 +21,12 @@ public class HeadingsController {
     @Autowired
     private PostemSakaiService postemSakaiService;
     
-	@Inject
+    @Autowired
 	private SessionManager sessionManager;
 
-    @RequestMapping(value = {"/title/{ascendingTitle}"})
+	@GetMapping(value = {"/title/{ascendingTitle}"})
     public String sortByTitle(@PathVariable("ascendingTitle") boolean ascendingTitle, Model model) {
-        log.debug("sortByTitle()");
+        log.debug("Postem sortByTitle");
         
         boolean toggleAscending = toggleSort(ascendingTitle);
 		String userId = sessionManager.getCurrentSessionUserId();
@@ -43,10 +43,10 @@ public class HeadingsController {
 
         return PostemToolConstants.INDEX_TEMPLATE;
     }
-    
-    @RequestMapping(value = {"/creator/{ascendingCreator}"})
+
+	@GetMapping(value = {"/creator/{ascendingCreator}"})
     public String sortByCreator(@PathVariable("ascendingCreator") boolean ascendingCreator, Model model) {
-        log.debug("sortByCreator()");
+        log.debug("Postem sortByCreator");
         
         boolean toggleAscending = toggleSort(ascendingCreator);
 		String userId = sessionManager.getCurrentSessionUserId();
@@ -64,9 +64,9 @@ public class HeadingsController {
         return PostemToolConstants.INDEX_TEMPLATE;
     }
     
-    @RequestMapping(value = {"/modifiedBy/{ascendingModifiedBy}"})
+	@GetMapping(value = {"/modifiedBy/{ascendingModifiedBy}"})
     public String sortByModifiedBy(@PathVariable("ascendingModifiedBy") boolean ascendingModifiedBy, Model model) {
-        log.debug("sortByModifiedBy()");
+        log.debug("Postem sortByModifiedBy");
         
         boolean toggleAscending = toggleSort(ascendingModifiedBy);
 		String userId = sessionManager.getCurrentSessionUserId();
@@ -84,9 +84,9 @@ public class HeadingsController {
         return PostemToolConstants.INDEX_TEMPLATE;
     }
     
-    @RequestMapping(value = {"/lastModified/{ascendingLastMod}"})
+	@GetMapping(value = {"/lastModified/{ascendingLastMod}"})
     public String sortByLastModified(@PathVariable("ascendingLastMod") boolean ascendingLastMod, Model model) {
-        log.debug("sortByLastModified()");
+        log.debug("Postem sortByLastModified");
         
         boolean toggleAscending = toggleSort(ascendingLastMod);
 		String userId = sessionManager.getCurrentSessionUserId();
@@ -103,10 +103,10 @@ public class HeadingsController {
 
         return PostemToolConstants.INDEX_TEMPLATE;
     }
-    
-    @RequestMapping(value = {"/released/{ascendingReleased}"})
+
+	@GetMapping(value = {"/released/{ascendingReleased}"})
     public String sortByReleased(@PathVariable("ascendingReleased") boolean ascendingReleased, Model model) {
-        log.debug("sortByReleased()");
+        log.debug("Postem sortByReleased");
         
         boolean toggleAscending = toggleSort(ascendingReleased);
 		String userId = sessionManager.getCurrentSessionUserId();

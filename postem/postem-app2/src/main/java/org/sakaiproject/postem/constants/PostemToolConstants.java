@@ -29,6 +29,7 @@ public class PostemToolConstants {
     public static final String MISSING_TITLE = "missing_title";
     public static final String TITLE_TOO_LONG = "title_too_long";
 	public static final String RESULT_OK = "result_ok";
+	public static final String RESULT_KO = "result_ko";
     public static final String MISSING_CSV = "missing_csv";
 	public static final String ERROR_UPLOADING = "error_uploading";
 	public static final String INVALID_DELIM = "invalid_delim";

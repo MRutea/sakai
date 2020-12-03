@@ -19,7 +19,9 @@ import lombok.Data;
 @Data
 public class GradebookForm {
 
+	private long id;
 	private boolean released;
 	private String title;
+	private String fileReference;
 	    
 }

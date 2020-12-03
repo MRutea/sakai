@@ -31,7 +31,7 @@ import org.sakaiproject.user.api.PreferencesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.support.RequestContextUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -51,9 +51,9 @@ public class MainController {
     @Autowired
     private PreferencesService preferencesService;
 
-    @RequestMapping(value = {"/", "/index"})
+    @GetMapping(value = {"/", "/index"})
     public String showIndex(Model model, HttpServletRequest request, HttpServletResponse response) {
-        log.debug("showIndex()");
+        log.debug("showIndex");
         
         String userId = sessionManager.getCurrentSessionUserId();
         final Locale locale = StringUtils.isNotBlank(userId) ? preferencesService.getLocale(userId) : Locale.getDefault();
@@ -73,18 +73,12 @@ public class MainController {
         return PostemToolConstants.INDEX_TEMPLATE;
     }
     
-    @RequestMapping(value = {"/add"})
+    @GetMapping(value = {"/add"})
     public String addItem(Model model) {
-        log.debug("addItem()");
-        
-		String userId = sessionManager.getCurrentSessionUserId();
-		String siteId = ToolManager.getCurrentPlacement().getContext();
-		Gradebook currentGradebook = postemSakaiService.createEmptyGradebook(userId, siteId);
-		currentGradebook.setTitle("xxxxxxxx");
-		currentGradebook.setReleased(false);
+        log.debug("addItem");
+
 		GradebookForm gradebookForm = new GradebookForm();
   		model.addAttribute("gradebookForm", gradebookForm);
-  		model.addAttribute("gradebook", currentGradebook);
         return PostemToolConstants.ADD_ITEM;
     }
    

@@ -32,6 +32,7 @@ import java.util.zip.DataFormatException;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,6 +41,9 @@ import org.sakaiproject.antivirus.api.VirusFoundException;
 import org.sakaiproject.api.app.postem.data.Gradebook;
 import org.sakaiproject.api.app.postem.data.GradebookManager;
 import org.sakaiproject.api.app.postem.data.StudentGrades;
+import org.sakaiproject.authz.api.AuthzGroup;
+import org.sakaiproject.authz.api.AuthzGroupService;
+import org.sakaiproject.authz.api.GroupNotDefinedException;
 import org.sakaiproject.authz.api.SecurityAdvisor;
 import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.authz.api.SecurityAdvisor.SecurityAdvice;
@@ -72,10 +76,12 @@ import org.sakaiproject.exception.TypeException;
 import org.sakaiproject.postem.constants.PostemToolConstants;
 
 import org.sakaiproject.postem.helpers.Pair;
+import org.sakaiproject.postem.helpers.URLConnectionReader;
 import org.sakaiproject.tool.api.Placement;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.tool.api.ToolSession;
 import org.sakaiproject.tool.cover.ToolManager;
+import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.user.api.UserNotDefinedException;
 import org.sakaiproject.util.Validator;
@@ -104,11 +110,9 @@ public class PostemSakaiService  {
 	private Reference attachment;
 	protected String newTemplate;
 	
-	private static final int TEMPLATE_MAX_LENGTH = 4000;
 	private static final int TITLE_MAX_LENGTH = 255;
 	private static final int HEADING_MAX_LENGTH = 500;
 	
-	private static final String COMMA_DELIM_STR = "comma";
 	private static final String TAB_DELIM_STR = "tab";
 
 	protected static final String FILE_UPLOAD_MAX_SIZE = "20";
@@ -118,33 +122,35 @@ public class PostemSakaiService  {
 	public static final String STATE_ATTACH_TOOL_NAME = PREFIX + "attach_tool_name";
 	protected static final String STATE_ATTACHMENT_FILTER = PREFIX + "attachment_filter";
 	protected static final String STATE_ADDED_ITEMS = PREFIX + "added_items";
+	protected boolean withHeader = true;
 	
 	/** kernel api **/
 	private static SecurityService securityService  = ComponentManager.get(SecurityService.class);
 	private static ToolManager toolManager = ComponentManager.get(ToolManager.class);
 	
-	@Inject
+	@Autowired
 	private SessionManager sessionManager;
 	
-	@Inject
+	@Autowired
 	private UserDirectoryService userDirectoryService;
 	
-	@Inject
+	@Autowired
 	private GradebookManager gradebookManager;
 	
-	@Inject
+	@Autowired
 	private ContentHostingService contentHostingService;
+	
+	@Autowired
+	private AuthzGroupService authzGroupService;
 
 	public ArrayList getGradebooks(String sortBy, boolean ascending) {
-		if (userId == null) {
-			userId = sessionManager.getCurrentSessionUserId();
+			String userId = sessionManager.getCurrentSessionUserId();
 			
 			if (userId != null) {
 				try {
 					userEid = userDirectoryService.getUserEid(userId);
 				} catch (UserNotDefinedException e) {
 					log.error("UserNotDefinedException", e);
-				}
 			}
 		}
 
@@ -201,7 +207,6 @@ public class PostemSakaiService  {
 		
 		// otherwise, just load what we need for the current user
 		currentGradebook = gradebookManager.getGradebookByIdWithHeadings(gradebookId);
-		this.userId = sessionManager.getCurrentSessionUserId();
 		
 		return studentMap;
 	}
@@ -238,7 +243,7 @@ public class PostemSakaiService  {
 		}
 		Gradebook currentGradebook = gradebookManager.getGradebookByIdWithHeadingsAndStudents(gradebookId);
 		gradebookManager.deleteGradebook(currentGradebook);
-		return "ok";
+		return PostemToolConstants.RESULT_OK;
 		
 	}
 	
@@ -371,7 +376,6 @@ public class PostemSakaiService  {
 		        try {
 					String siteId = toolManager.getCurrentPlacement().getContext();
 					String toolName = toolManager.getCurrentPlacement().getTitle();
-					//String id = toolSession.getPlacementId();
 		            String collection = Entity.SEPARATOR + "attachment" + Entity.SEPARATOR + siteId + Entity.SEPARATOR + toolName + Entity.SEPARATOR;
 		            int lastIndexOf = fileName.lastIndexOf("/");
 		            if (lastIndexOf != -1 && (fileName.length() > lastIndexOf + 1)) {
@@ -398,7 +402,7 @@ public class PostemSakaiService  {
 		            ContentResourceEdit edit = contentHostingService.addResource(collection, finalFileName, suffix, 99999);
 		            edit.setContent(fileContentStream);
 		            contentHostingService.commitResource(edit, NotificationService.NOTI_NONE);
-		            //return edit.getUrl(true);
+		            toolSession.setAttribute("attachmentId", edit.getId());
 		        } catch (Exception e) {
 		            log.error("Failed to store file.", e);
 		            fileName = "";
@@ -419,7 +423,7 @@ public class PostemSakaiService  {
 	    return gradebook;
 	  }
   
-  public String processCreate(Gradebook gradebook) {
+  public String processCreate(Gradebook currentGradebook) {
 
 		try {
 			if (!this.checkAccess()) {
@@ -430,109 +434,95 @@ public class PostemSakaiService  {
 		} catch (PermissionException e) {
 			this.currentGradebook = null;
 			this.csv = null;
-			this.newTemplate = null;
-			// this.release = null;
 			return PostemToolConstants.PERMISSION_ERROR;
 		}
 		
 		ToolSession toolSession = sessionManager.getCurrentToolSession();
-		String fileId = (String) toolSession.getAttribute("file");
 		
-		if (gradebook.getId() == null) {
+		if (currentGradebook.getId() == null && currentGradebook.getFileReference() == null) {
 			ArrayList gb = getGradebooks();
 			Iterator gi = gb.iterator();
 			while (gi.hasNext()) {
 				if (((Gradebook) gi.next()).getTitle().equals(
-						gradebook.getTitle())) {
+						currentGradebook.getTitle())) {
 					//alert message "duplicate_title"
 					return PostemToolConstants.DUPLICATE_TITLE;
 				}
 			}
 		}
-		if (gradebook.getTitle() == null
-				|| gradebook.getTitle().equals("")) {
+		if (currentGradebook.getTitle() == null
+				|| currentGradebook.getTitle().equals("")) {
 			return PostemToolConstants.MISSING_TITLE;
 		}
-		else if(gradebook.getTitle().trim().length() > TITLE_MAX_LENGTH) {
+		else if(currentGradebook.getTitle().trim().length() > TITLE_MAX_LENGTH) {
 			return PostemToolConstants.TITLE_TOO_LONG;
 		}
 		
 		Reference attachment = getAttachmentReference();
 		if (attachment == null){
 			//todo tratar attachment
-			return PostemToolConstants.MISSING_CSV;
+			//return PostemToolConstants.MISSING_CSV;
 		}
 
-		if (1>2) {
-			return PostemToolConstants.INVALID_DELIM;
-		}
+		if (toolSession.getAttribute("attachmentId") != null) {
+			try {
+				
+				char csv_delim = CSV.COMMA_DELIM;
+				
+				//Read the data from attachment
+				String attachmentId = (String) toolSession.getAttribute("attachmentId");
+				ContentResource cr = contentHostingService.getResource(attachmentId);
+				//Check the type
+				if (ResourceProperties.TYPE_URL.equalsIgnoreCase(cr.getContentType())) {
+					//Going to need to read from a stream
+					String csvURL = new String(cr.getContent());
+					//Load the URL
+					csv = URLConnectionReader.getText(csvURL); 
+					if (log.isDebugEnabled()) {
+						log.debug(csv);
+					}
+				}
+				else {
+					// check that file is actually a CSV file
+					if (!cr.getContentType().equalsIgnoreCase("text/csv")) {
+						return "invalid_ext";
+					}
 
-//		if (attachment != null) {
-//			// logger.info("*** Non-Empty CSV!");
-//			try {
-//				
-//				char csv_delim = CSV.COMMA_DELIM;
-//				if(this.delimiter.equals(TAB_DELIM_STR)) {
-//					csv_delim = CSV.TAB_DELIM;
-//				}
-//				
-//				//Read the data
-//				
-//				ContentResource cr = contentHostingService.getResource(attachment.getId());
-//				//Check the type
-//				if (ResourceProperties.TYPE_URL.equalsIgnoreCase(cr.getContentType())) {
-//					//Going to need to read from a stream
-//					String csvURL = new String(cr.getContent());
-//					//Load the URL
-//					csv = URLConnectionReader.getText(csvURL); 
-//					if (log.isDebugEnabled()) {
-//						log.debug(csv);
-//					}
-//				}
-//				else {
-//					// check that file is actually a CSV file
-//					if (!cr.getContentType().equalsIgnoreCase("text/csv")) {
-//						PostemTool.populateMessage(FacesMessage.SEVERITY_ERROR, "invalid_ext", new Object[] {getAttachmentTitle()});
-//						return "create_gradebook";
-//					}
-//
-//					csv = new String(cr.getContent());
-//					if (log.isDebugEnabled()) {
-//						log.debug(csv);
-//					}
-//				}
-//				CSV grades = new CSV(csv, withHeader, csv_delim);
-//				
-//				if (withHeader == true) {
-//					if (grades.getHeaders() != null) {
-//
-//						List headingList = grades.getHeaders();
-//						for(int col=0; col < headingList.size(); col++) {
-//							String heading = (String)headingList.get(col).toString().trim();	
-//							// Make sure there are no blank headings
-//							if(heading == null || heading.equals("")) {
-//								PostemTool.populateMessage(FacesMessage.SEVERITY_ERROR,
-//										"blank_headings", new Object[] {});
-//								return "create_gradebook";
-//							}
-//							// Make sure the headings don't exceed max limit
-//							if (heading.length() > HEADING_MAX_LENGTH) {
-//								PostemTool.populateMessage(FacesMessage.SEVERITY_ERROR, "heading_too_long", new Object[] {new Integer(HEADING_MAX_LENGTH)});
-//								return "create_gradebook";
-//							}
-//						}
-//					}
-//				}
-//				
-//				if (grades.getStudents() != null) {
-//				  if(!usernamesValid(grades)) {
-//					  return "create_gradebook";
-//				  }
-//				  
-//				  if (hasADuplicateUsername(grades)) {
-//					  return "create_gradebook";
-//				  }
-//				}
+					csv = new String(cr.getContent());
+					if (log.isDebugEnabled()) {
+						log.debug(csv);
+					}
+				}
+				CSV grades = new CSV(csv, withHeader, csv_delim);
+				
+				if (withHeader == true) {
+					if (grades.getHeaders() != null) {
+
+						List headingList = grades.getHeaders();
+						for(int col=0; col < headingList.size(); col++) {
+							String heading = (String)headingList.get(col).toString().trim();	
+							// Make sure there are no blank headings
+							if(heading == null || heading.equals("")) {
+								return "blank_headings";
+							}
+							// Make sure the headings don't exceed max limit
+							if (heading.length() > HEADING_MAX_LENGTH) {
+								return "heading_too_long";
+							}
+						}
+						currentGradebook.setHeadings(headingList);
+					}
+				}
+				
+				if (grades.getStudents() != null) {
+				  if(!usernamesValid(grades)) {
+					  return "create_gradebook";
+				  }
+				  
+				  if (hasADuplicateUsername(grades)) {
+					  return "create_gradebook";
+				  }
+				}
 //				
 //				if (this.newTemplate != null && this.newTemplate.trim().length() > 0) {
 //					if(this.newTemplate.trim().length() > TEMPLATE_MAX_LENGTH) {
@@ -556,69 +546,36 @@ public class PostemSakaiService  {
 //				if (withHeader == true) {
 //					currentGradebook.setHeadings(grades.getHeaders());
 //				}
-//				List slist = grades.getStudents();
+				List slist = grades.getStudents();
 //
 //				if (oldGradebook.getId() != null && !this.userPressedBack) {
 //					Set oldStudents = currentGradebook.getStudents();
 //					oldGradebook.setStudents(oldStudents);
 //				}
 //
-//				currentGradebook.setStudents(new TreeSet());
-//				// gradebookManager.saveGradebook(currentGradebook);
-//				Iterator si = slist.iterator();
-//				while (si.hasNext()) {
-//					List ss = (List) si.next();
-//					String uname = ((String) ss.remove(0)).trim();
-//					// logger.info("[POSTEM] processCreate -- adding student " +
-//					// uname);
-//					gradebookManager.createStudentGradesInGradebook(uname, ss,
-//							currentGradebook);
-//					if (currentGradebook.getStudents().size() == 1) {
-//						currentGradebook.setFirstUploadedUsername(uname);  //otherwise, the verify screen shows first in ABC order
-//					}
-//				}
-//			} catch (DataFormatException exception) {
-//				/*
-//				 * TODO: properly subclass exception in order to allow for localized
-//				 * messages (add getRowNumber/setRowNumber). Set exception message to be
-//				 * key in .properties file
-//				 */
+				currentGradebook.setStudents(new TreeSet());
+				Iterator si = slist.iterator();
+				while (si.hasNext()) {
+					List ss = (List) si.next();
+					String uname = ((String) ss.remove(0)).trim();
+					gradebookManager.createStudentGradesInGradebook(uname, ss,
+							currentGradebook);
+					if (currentGradebook.getStudents().size() == 1) {
+						currentGradebook.setFirstUploadedUsername(uname);  //otherwise, the verify screen shows first in ABC order
+					}
+				}
+			} catch (Exception exception) {
+				/*
+				 * TODO: properly subclass exception in order to allow for localized
+				 * messages (add getRowNumber/setRowNumber). Set exception message to be
+				 * key in .properties file
+				 */
 //				PostemTool.populateMessage(FacesMessage.SEVERITY_ERROR, exception
 //						.getMessage(), new Object[] {});
 //				return "create_gradebook";
-//			} catch (IdUnusedException e) {
-//				PostemTool.populateMessage(FacesMessage.SEVERITY_ERROR, e
-//						.getMessage(), new Object[] {});
-//				return "create_gradebook";
-//			} catch (TypeException e) {
-//				PostemTool.populateMessage(FacesMessage.SEVERITY_ERROR, e
-//						.getMessage(), new Object[] {});
-//				return "create_gradebook";
-//			} catch (PermissionException e) {
-//				PostemTool.populateMessage(FacesMessage.SEVERITY_ERROR, e
-//						.getMessage(), new Object[] {});
-//				return "create_gradebook";
-//			} catch (ServerOverloadException e) {
-//				PostemTool.populateMessage(FacesMessage.SEVERITY_ERROR, e
-//						.getMessage(), new Object[] {});
-//				return "create_gradebook";
-//			} catch (IOException e) {
-//				PostemTool.populateMessage(FacesMessage.SEVERITY_ERROR, e
-//						.getMessage(), new Object[] {});
-//				return "create_gradebook";
-//			}
-//		} else if (this.csv != null) {
-//			// logger.info("**** Non Null Empty CSV!");
-//			PostemTool.populateMessage(FacesMessage.SEVERITY_ERROR, "has_students",
-//					new Object[] { new Integer(0) });
-//			currentGradebook.setHeadings(new ArrayList());
-//			if (oldGradebook.getId() != null) {
-//				Set oldStudents = currentGradebook.getStudents();
-//				oldGradebook.setStudents(oldStudents);
-//			}
-//
-//			currentGradebook.setStudents(new TreeSet());
-//		}
+				exception.printStackTrace();
+			} 
+		}
 //
 //		if (this.newTemplate != null && this.newTemplate.trim().length() > 0) {
 //			currentGradebook
@@ -636,9 +593,9 @@ public class PostemSakaiService  {
 //		 * Yes, " + currentGradebook.getReleased()); }
 //		 */
 //
-//		// gradebookManager.saveGradebook(currentGradebook);
-//		// logger.info(currentGradebook.getId());
-//		// currentGradebook = null;
+//		gradebookManager.saveGradebook(currentGradebook);
+//		log.debug(currentGradebook.getId().toString());
+//		currentGradebook = null;
 //		if ((this.csv != null && this.csv.trim().length() > 0)
 //				|| (this.newTemplate != null && this.newTemplate.trim().length() > 0)) {
 //			this.csv = null;
@@ -650,33 +607,26 @@ public class PostemSakaiService  {
 //		while (oi.hasNext()) {
 //			gradebookManager.deleteStudentGrades((StudentGrades) oi.next());
 //		}
-//		this.userId = SessionManager.getCurrentSessionUserId();
-//		currentGradebook.setLastUpdated(new Timestamp(new Date().getTime()));
-//		currentGradebook.setLastUpdater(this.userId);
-//		gradebookManager.saveGradebook(currentGradebook);
-//
-//		this.currentGradebook = null;
-//		this.oldGradebook = null;
-//		this.withHeader = true;
-		// this.gradebooks = null;
+		currentGradebook.setLastUpdated(new Timestamp(new Date().getTime()));
+		currentGradebook.setLastUpdater(sessionManager.getCurrentSessionUserId());
+		
+		if ( null != currentGradebook.getFileReference() && !currentGradebook.getFileReference().equals("")) {
+			String resultDelete = processDelete(currentGradebook.getId());//todo resultdelete
+		}
+		
+		gradebookManager.saveGradebook(currentGradebook);
+
 		return PostemToolConstants.INDEX_TEMPLATE;
 	}
 
-	/*
-	 * public void setRelease(String release) { this.release = release; }
-	 * 
-	 * public String getRelease() { return release; }
-	 */
 	public ArrayList getGradebooks() {
-		if (userId == null) {
-			userId = sessionManager.getCurrentSessionUserId();
+			String userId = sessionManager.getCurrentSessionUserId();
 			
 			if (userId != null) {
 				try {
 					userEid = userDirectoryService.getUserEid(userId);
 				} catch (UserNotDefinedException e) {
 					log.error("UserNotDefinedException", e);
-				}
 			}
 		}
 
@@ -749,6 +699,144 @@ public class PostemSakaiService  {
     	securityService.popAdvisor();
     }
 
-  
+	private boolean hasADuplicateUsername(CSV studentGrades) {
+		List usernameList = studentGrades.getStudentUsernames();
+		List duplicatesList = new ArrayList();
+		
+		while (usernameList.size() > 0) {
+			String username = (String)usernameList.get(0);
+			usernameList.remove(username);
+			if (usernameList.contains(username)
+					&& !duplicatesList.contains(username)) {
+				duplicatesList.add(username);
+			}
+		}
+		
+		if (duplicatesList.size() <= 0) {
+			return false;
+		}
+		
+		if (duplicatesList.size() == 1) {
+			System.out.println("single_duplicate_username");
+		} else {
+			System.out.println("mult_duplicate_usernames");
+		}
+		
+		for (int i=0; i < duplicatesList.size(); i++) {
+			System.out.println("duplicate_username");
+		}
+		
+			System.out.println("duplicate_username_dir");
+		
+		return true;
+	}
+	
+	private boolean usernamesValid(CSV studentGrades) {
+		boolean usersAreValid = true;
+		List blankRows = new ArrayList();
+		List invalidUsernames = new ArrayList();
+		int row=1;
+		
+		List siteMembers = getSiteMembers();
+		
+		List studentList = studentGrades.getStudentUsernames();
+		Iterator studentIter = studentList.iterator();
+		while (studentIter.hasNext()) {
+			row++;
+			String usr = (String) studentIter.next();
+			
+			if (log.isDebugEnabled()) {
+				log.debug("usernamesValid : username=" + usr);
+				log.debug("usernamesValid : siteMembers" + siteMembers);
+			}
+			if (usr == null || usr.equals("")) {
+
+				usersAreValid = false;
+				blankRows.add(new Integer(row));
+			} else if(siteMembers == null || (siteMembers != null && !siteMembers.contains(getUserDefined(usr)))) {
+				  usersAreValid = false;
+				  invalidUsernames.add(usr);
+			}	
+		}
+		
+		if (blankRows.size() == 1) {
+			System.out.println("missing_single_username");
+			System.out.println("missing_location");
+			System.out.println("missing_username_dir");
+		} else if (blankRows.size() > 1) {
+			System.out.println("missing_mult_usernames");
+			for(int i=0; i < blankRows.size(); i++) {
+				System.out.println("missing_location");
+			}
+			System.out.println("missing_username_dir");
+		}
+		
+		if (invalidUsernames.size() == 1) {
+			System.out.println("blank");
+			System.out.println("single_invalid_username");
+			System.out.println("invalid_username");
+			System.out.println("single_invalid_username_dir");
+		} else if (invalidUsernames.size() > 1) {
+			System.out.println("blank");
+			System.out.println("mult_invalid_usernames");
+			for(int j=0; j < invalidUsernames.size(); j++) {
+				System.out.println("invalid_username");
+			}	
+			System.out.println("mult_invalid_usernames_dir");
+		}
+	  return usersAreValid;
+	}
+
+	private List getSiteMembers() {
+		List siteMembers = new ArrayList();
+		try	{
+			AuthzGroup realm = authzGroupService.getAuthzGroup("/site/" + getCurrentSiteId());
+			siteMembers = new ArrayList(realm.getUsers());
+		}
+		catch (GroupNotDefinedException e) {
+			log.error("GroupNotDefinedException:", e);
+		}
+		
+		return siteMembers;
+	}
+
+	private String getCurrentSiteId()
+	{
+		Placement placement = ToolManager.getCurrentPlacement();
+		return placement.getContext();
+	}
+
+	//Returns getUser and getUserByEid on the input string
+	//@return Either the id of the user, or the same string if not defined
+	private String getUserDefined(String usr)
+	{
+		//Set the original user id
+		String userId = usr;
+		User userinfo;
+		try	{
+			userinfo = userDirectoryService.getUser(usr);
+			userId = userinfo.getId();
+			if (log.isDebugEnabled()) {
+				log.debug("getUserDefined: username for " + usr + " is " + userId);
+			}
+			return userId;
+		} 
+		catch (UserNotDefinedException e) {
+			try
+			{
+				// try with the user eid
+				userinfo = userDirectoryService.getUserByEid(usr);
+				userId = userinfo.getId();
+			}
+			catch (UserNotDefinedException ee)
+			{
+				//This is mostly expected behavior, don't need to notify about it, the UI can handle it
+				if (log.isDebugEnabled()) {
+					log.debug("getUserDefined: User Not Defined" + userId);
+				}
+			}
+		}
+		return userId;
+	}
 
 }

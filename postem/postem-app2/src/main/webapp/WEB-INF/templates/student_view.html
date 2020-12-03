@@ -7,7 +7,7 @@
       <div id="menu" th:include="fragments/menus :: main (index)" />
       <h1 th:text="#{view_student}"></h1>
       <div>
-        <form action="#" th:action="@{/student_view_result/{gradebookId}(gradebookId = ${gradebookId})}" method="post" id="student_view_form">
+        <form action="#" th:action="@{/student_view_result/{gradebookId}(gradebookId = ${gradebookId})}" method="get" id="student_view_form">
           <label th:text="#{choose_username}"></label>
           <select id="selectedParticipant" onchange="studentViewFunctions.showStudent();">
            <option th:each="category : ${studentMap}" th:value="${category.value}" th:selected="${category.value eq lastSelected}" th:text="${category.key}">
