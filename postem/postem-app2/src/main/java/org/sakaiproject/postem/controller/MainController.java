@@ -26,12 +26,14 @@ import org.sakaiproject.postem.constants.PostemToolConstants;
 import org.sakaiproject.postem.form.GradebookForm;
 import org.sakaiproject.postem.service.PostemSakaiService;
 import org.sakaiproject.tool.api.SessionManager;
+import org.sakaiproject.tool.api.ToolSession;
 import org.sakaiproject.tool.cover.ToolManager;
 import org.sakaiproject.user.api.PreferencesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.support.RequestContextUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -68,17 +70,20 @@ public class MainController {
 		model.addAttribute("ascendingCreator", "false");
 		model.addAttribute("ascendingModifiedBy", "false");
 		model.addAttribute("ascendingLastMod", "false");
-		model.addAttribute("ascendingReleased", "false");		
+		model.addAttribute("ascendingReleased", "false");	
+		
+		ToolSession toolSession = sessionManager.getCurrentToolSession();
+		toolSession.setAttribute("currentGradebook", null);
 
         return PostemToolConstants.INDEX_TEMPLATE;
     }
     
     @GetMapping(value = {"/add"})
-    public String addItem(Model model) {
+    public String addItem(@ModelAttribute("gradebookForm") GradebookForm gradebookForm, Model model) {
         log.debug("addItem");
 
-		GradebookForm gradebookForm = new GradebookForm();
   		model.addAttribute("gradebookForm", gradebookForm);
+  		model.addAttribute("fileReference", gradebookForm.getFileReference());
         return PostemToolConstants.ADD_ITEM;
     }
    

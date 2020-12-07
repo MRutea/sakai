@@ -67,14 +67,14 @@
 						class="form-control-label" th:text="#{release}">Release
 						feedback to participants?</label>
 				</div>
-				<input type="hidden" th:field="*{fileReference}" id="fileReference">
+				<input type="hidden" th:field="*{gradebookUpdate}" id="gradebookUpdate">
 				<input type="hidden" th:field="*{id}" id="id">
 			</div>
 			<br>
 			<div class="act">
 				<input accesskey="x" type="submit" class="active"
-					id="gradebook-continue-button" th:value="#{bar_post}"> <a
-					th:href="@{/}" accesskey="x" id="gradebook-cancel-button"
+					id="gradebook-continue-button" th:value="#{bar_post}"> 
+				<a th:href="@{/}" accesskey="x" id="gradebook-cancel-button"
 					class="btn btn-default" th:text="#{cancel}">Cancel</a>
 			</div>
 		</form>

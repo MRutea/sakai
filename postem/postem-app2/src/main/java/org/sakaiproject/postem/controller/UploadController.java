@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 import org.sakaiproject.api.app.postem.data.Gradebook;
+import org.sakaiproject.api.app.postem.data.StudentGrades;
 import org.sakaiproject.postem.constants.PostemToolConstants;
 import org.sakaiproject.postem.form.GradebookForm;
 import org.sakaiproject.postem.service.PostemSakaiService;
@@ -31,7 +32,6 @@ import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.tool.api.ToolSession;
 import org.sakaiproject.tool.cover.ToolManager;
 import org.sakaiproject.user.api.PreferencesService;
-import org.sakaiproject.util.ResourceLoader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
@@ -76,60 +76,93 @@ public class UploadController {
 	public String createGradebook(@ModelAttribute("gradebookForm") GradebookForm gradebookForm, Model model) {
         log.debug("createGradebook");
         
-        //wait until file upload
-        try {
-            Thread.sleep(1000);
-        } catch(InterruptedException ex) {
-            Thread.currentThread().interrupt();
-        }
-        
-        String userId = sessionManager.getCurrentSessionUserId();
-        final Locale locale = StringUtils.isNotBlank(userId) ? preferencesService.getLocale(userId) : Locale.getDefault();
-        
-		String siteId = ToolManager.getCurrentPlacement().getContext();
-		Gradebook currentGradebook = postemSakaiService.createEmptyGradebook(userId, siteId);
-
-		currentGradebook.setRelease(gradebookForm.isReleased());
-		currentGradebook.setTitle(gradebookForm.getTitle());
-		currentGradebook.setFileReference(gradebookForm.getFileReference());
-		currentGradebook.setId(gradebookForm.getId());
-  		model.addAttribute("gradebook", currentGradebook);
-  		
+	    String userId = sessionManager.getCurrentSessionUserId();
+	    final Locale locale = StringUtils.isNotBlank(userId) ? preferencesService.getLocale(userId) : Locale.getDefault();
 		ToolSession toolSession = sessionManager.getCurrentToolSession();
+        Gradebook currentGradebook = (Gradebook) toolSession.getAttribute("currentGradebook");
+        if (null == currentGradebook) {
+        
+		    //wait until file upload completes
+		    try {
+		        Thread.sleep(1000);
+		    } catch(InterruptedException ex) {
+		        Thread.currentThread().interrupt();
+		    }
+		    
+		    
+			String siteId = ToolManager.getCurrentPlacement().getContext();
+			currentGradebook = postemSakaiService.createEmptyGradebook(userId, siteId);
+			
+			String fileId = (String) toolSession.getAttribute("attachmentId");
+			boolean isGradebookUpdate = gradebookForm.isGradebookUpdate();
+			if (fileId.isEmpty() || fileId==null) {
+				model.addAttribute("errorMessage", PostemToolConstants.MISSING_CSV);
+				return PostemToolConstants.ADD_ITEM;
+			}	
+			
+			currentGradebook.setRelease(gradebookForm.isReleased());
+			currentGradebook.setTitle(gradebookForm.getTitle());
+			currentGradebook.setFileReference(fileId);
+			currentGradebook.setId(gradebookForm.getId());
+		    String[] parts = fileId.split("/");
+		    String partFileReference = parts[parts.length-1];
+			gradebookForm.setFileReference(partFileReference);
+			model.addAttribute("gradebook", currentGradebook);
+			
+			String resultUploading = (String) toolSession.getAttribute("resultUploading");
+			String literalErrorMessage = null;
+			if (resultUploading != PostemToolConstants.RESULT_OK) {
+				literalErrorMessage = MessageFormat.format(messageSource.getMessage(PostemToolConstants.TITLE_TOO_LONG, null, locale), 
+						new Integer(currentGradebook.getTitle().trim().length()), TITLE_MAX_LENGTH);//TODO length of file name
+				model.addAttribute("literalErrorMessage", literalErrorMessage);
+				return PostemToolConstants.ADD_ITEM;
+			}
 		
-		String resultUploading = (String) toolSession.getAttribute("resultUploading");
-		String literalErrorMessage = null;
-		if (resultUploading != PostemToolConstants.RESULT_OK) {
-			literalErrorMessage = MessageFormat.format(messageSource.getMessage(PostemToolConstants.TITLE_TOO_LONG, null, locale), 
-					new Integer(currentGradebook.getTitle().trim().length()), TITLE_MAX_LENGTH);//TODO length of file name
-			model.addAttribute("literalErrorMessage", literalErrorMessage);
-   			return PostemToolConstants.ADD_ITEM;
-		}
-		String fileId = (String) toolSession.getAttribute("file");
-		if (fileId.isEmpty() || fileId==null) {
-			model.addAttribute("errorMessage", PostemToolConstants.MISSING_CSV);
-   			return PostemToolConstants.ADD_ITEM;
-		}	
-		toolSession.setAttribute("file", "");
-
-    	String result = postemSakaiService.processCreate(currentGradebook);
+			String result = postemSakaiService.processCreate(currentGradebook, isGradebookUpdate);
+			toolSession.setAttribute("attachmentId", "");
+			
+			switch (result) {
+			  case PostemToolConstants.DUPLICATE_TITLE: 
+				 model.addAttribute("errorMessage", PostemToolConstants.DUPLICATE_TITLE);
+				 return PostemToolConstants.ADD_ITEM;
+			  case PostemToolConstants.MISSING_TITLE: 
+				 model.addAttribute("errorMessage", PostemToolConstants.MISSING_TITLE);
+				 return PostemToolConstants.ADD_ITEM;
+			  case PostemToolConstants.TITLE_TOO_LONG: 
+				 model.addAttribute("errorMessage", PostemToolConstants.TITLE_TOO_LONG);
+				 return PostemToolConstants.ADD_ITEM;
+			  case PostemToolConstants.MISSING_CSV: 
+				 model.addAttribute("errorMessage", PostemToolConstants.MISSING_CSV);
+				 return PostemToolConstants.ADD_ITEM;
+			}
+        }
     	
-    	switch (result) {
-    	  case PostemToolConstants.DUPLICATE_TITLE: 
-    		 model.addAttribute("errorMessage", PostemToolConstants.DUPLICATE_TITLE);
-    		 return PostemToolConstants.ADD_ITEM;
-    	  case PostemToolConstants.MISSING_TITLE: 
-    		 model.addAttribute("errorMessage", PostemToolConstants.MISSING_TITLE);
-    		 return PostemToolConstants.ADD_ITEM;
-    	  case PostemToolConstants.TITLE_TOO_LONG: 
-    		 model.addAttribute("errorMessage", PostemToolConstants.TITLE_TOO_LONG);
-    		 return PostemToolConstants.ADD_ITEM;
-    	  case PostemToolConstants.MISSING_CSV: 
-    		 model.addAttribute("errorMessage", PostemToolConstants.MISSING_CSV);
-    		 return PostemToolConstants.ADD_ITEM;
-    	}
-	
-		return PostemToolConstants.REDIRECT_MAIN_TEMPLATE;
+    	//to populate verify view
+		String hasStudents = MessageFormat.format(messageSource.getMessage(PostemToolConstants.HAS_STUDENTS, null, locale), 
+				new Integer(currentGradebook.getStudents().size()));
+		model.addAttribute("has_students", hasStudents);
+		
+    	StudentGrades studentGrades = currentGradebook.studentGrades(currentGradebook.getFirstUploadedUsername());
+    	model.addAttribute("studentGrades", studentGrades);
+		model.addAttribute("currentGradebook", currentGradebook);
+  		model.addAttribute("gradebookForm", gradebookForm);
+		toolSession.setAttribute("currentGradebook", currentGradebook);
+		
+		return PostemToolConstants.VERIFY;
 	}
+
+    @PostMapping(value = "/create_gradebook_ok")
+	public String createGradebookOk(Model model) {
+        log.debug("createGradebook");
+        
+		ToolSession toolSession = sessionManager.getCurrentToolSession();
+        Gradebook gradebook = (Gradebook) toolSession.getAttribute("currentGradebook");
+        if (null != gradebook) {
+        	postemSakaiService.processCreateOk(gradebook);
+        }
+		toolSession.setAttribute("currentGradebook", null);
+
+		return PostemToolConstants.REDIRECT_MAIN_TEMPLATE;
+    }
 
 }

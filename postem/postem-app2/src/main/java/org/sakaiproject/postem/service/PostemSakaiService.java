@@ -305,8 +305,7 @@ public class PostemSakaiService  {
   }
 	
   public StudentGrades getStudentByGBAndUsername(Gradebook currentGradebook, String selectedStudent) {
-    StudentGrades selStudent = gradebookManager.getStudentByGBAndUsername(currentGradebook, selectedStudent);
-    return selStudent;
+    return gradebookManager.getStudentByGBAndUsername(currentGradebook, selectedStudent);
   }
 
   public String doDragDropUpload (MultipartFile file, HttpServletRequest request) {
@@ -414,7 +413,6 @@ public class PostemSakaiService  {
 			}
 			
 		}
-	  toolSession.setAttribute("file", fileName);
 	  return PostemToolConstants.RESULT_OK;
   }
   
@@ -423,7 +421,7 @@ public class PostemSakaiService  {
 	    return gradebook;
 	  }
   
-  public String processCreate(Gradebook currentGradebook) {
+  public String processCreate(Gradebook currentGradebook, boolean isGradebookUpdate) {
 
 		try {
 			if (!this.checkAccess()) {
@@ -456,12 +454,6 @@ public class PostemSakaiService  {
 		}
 		else if(currentGradebook.getTitle().trim().length() > TITLE_MAX_LENGTH) {
 			return PostemToolConstants.TITLE_TOO_LONG;
-		}
-		
-		Reference attachment = getAttachmentReference();
-		if (attachment == null){
-			//todo tratar attachment
-			//return PostemToolConstants.MISSING_CSV;
 		}
 
 		if (toolSession.getAttribute("attachmentId") != null) {
@@ -523,36 +515,8 @@ public class PostemSakaiService  {
 					  return "create_gradebook";
 				  }
 				}
-//				
-//				if (this.newTemplate != null && this.newTemplate.trim().length() > 0) {
-//					if(this.newTemplate.trim().length() > TEMPLATE_MAX_LENGTH) {
-//						PostemTool.populateMessage(FacesMessage.SEVERITY_ERROR, "template_too_long",
-//								new Object[] { new Integer(this.newTemplate.trim().length()), new Integer(TEMPLATE_MAX_LENGTH)});
-//						return "create_gradebook";
-//					}
-//				}
-//				
-//				if (withHeader == true) {
-//					if (grades.getHeaders() != null) {	
-//						PostemTool.populateMessage(FacesMessage.SEVERITY_INFO,
-//								"has_headers", new Object[] {});
-//					}
-//				}
-//				if (grades.getStudents() != null) {	
-//					PostemTool.populateMessage(FacesMessage.SEVERITY_INFO,
-//							"has_students", new Object[] { new Integer(grades.getStudents()
-//									.size()) });
-//				}
-//				if (withHeader == true) {
-//					currentGradebook.setHeadings(grades.getHeaders());
-//				}
+
 				List slist = grades.getStudents();
-//
-//				if (oldGradebook.getId() != null && !this.userPressedBack) {
-//					Set oldStudents = currentGradebook.getStudents();
-//					oldGradebook.setStudents(oldStudents);
-//				}
-//
 				currentGradebook.setStudents(new TreeSet());
 				Iterator si = slist.iterator();
 				while (si.hasNext()) {
@@ -576,47 +540,15 @@ public class PostemSakaiService  {
 				exception.printStackTrace();
 			} 
 		}
-//
-//		if (this.newTemplate != null && this.newTemplate.trim().length() > 0) {
-//			currentGradebook
-//					.setTemplate(gradebookManager.createTemplate(newTemplate.trim()));
-//		} else if (this.newTemplate != null) {
-//			// logger.info("*** Non Null Empty Template!");
-//			currentGradebook.setTemplate(null);
-//		}
-//
-//		/*
-//		 * if("No".equals(this.release)) { currentGradebook.setReleased(new
-//		 * Boolean(false)); //logger.info("Set to No, " +
-//		 * currentGradebook.getReleased()); } else {
-//		 * currentGradebook.setReleased(new Boolean(true)); //logger.info("Set to
-//		 * Yes, " + currentGradebook.getReleased()); }
-//		 */
-//
-//		gradebookManager.saveGradebook(currentGradebook);
-//		log.debug(currentGradebook.getId().toString());
-//		currentGradebook = null;
-//		if ((this.csv != null && this.csv.trim().length() > 0)
-//				|| (this.newTemplate != null && this.newTemplate.trim().length() > 0)) {
-//			this.csv = null;
-//			this.newTemplate = null;
-//			return "verify";
-//		}
-//
-//		Iterator oi = oldGradebook.getStudents().iterator();
-//		while (oi.hasNext()) {
-//			gradebookManager.deleteStudentGrades((StudentGrades) oi.next());
-//		}
+
 		currentGradebook.setLastUpdated(new Timestamp(new Date().getTime()));
 		currentGradebook.setLastUpdater(sessionManager.getCurrentSessionUserId());
 		
-		if ( null != currentGradebook.getFileReference() && !currentGradebook.getFileReference().equals("")) {
+		if (isGradebookUpdate) {
 			String resultDelete = processDelete(currentGradebook.getId());//todo resultdelete
 		}
-		
-		gradebookManager.saveGradebook(currentGradebook);
 
-		return PostemToolConstants.INDEX_TEMPLATE;
+		return PostemToolConstants.RESULT_OK;
 	}
 
 	public ArrayList getGradebooks() {
@@ -636,11 +568,9 @@ public class PostemSakaiService  {
 		siteId = currentSiteId;
 		try {
 			if (checkAccess()) {
-				// logger.info("**** Getting by context!");
 				gradebooks = new ArrayList(gradebookManager
 						.getGradebooksByContext(siteId, sortBy, ascending));
 			} else {
-				// logger.info("**** Getting RELEASED by context!");
 				gradebooks = new ArrayList(gradebookManager
 						.getReleasedGradebooksByContext(siteId, sortBy, ascending));
 			}
@@ -837,6 +767,17 @@ public class PostemSakaiService  {
 			}
 		}
 		return userId;
+	}
+	
+	public String processCreateOk(Gradebook currentGradebook) {
+		
+		try {
+			gradebookManager.saveGradebook(currentGradebook);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return PostemToolConstants.RESULT_KO;
+		}
+		return PostemToolConstants.RESULT_OK;
 	}
 
 }

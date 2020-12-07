@@ -70,7 +70,6 @@ public class ColumnsController {
     public String getViewStudent(@PathVariable("gradebookId") Long gradebookId, Model model) {
         log.debug("getViewStudent");
         
-		String userId = sessionManager.getCurrentSessionUserId();
 		studentMap = postemSakaiService.processGradebookView(gradebookId);
 
 		model.addAttribute("studentMap", studentMap);
@@ -82,8 +81,7 @@ public class ColumnsController {
 	@GetMapping(value = {"/student_view_result/{gradebookId}/{student}"})
     public String getViewStudentResult(@PathVariable("gradebookId") Long gradebookId, @PathVariable("student") String selectedStudent, Model model) {
         log.debug("getViewStudent");
-        
-		String userId = sessionManager.getCurrentSessionUserId();
+
 		studentMap = postemSakaiService.processGradebookView(gradebookId);
 		Pair pair = postemSakaiService.getGradebookById(gradebookId);
         if(pair.getFirst()!=null && pair.getFirst().toString().equals(PostemToolConstants.PERMISSION_ERROR) && pair.getSecond()==null) {
@@ -93,12 +91,12 @@ public class ColumnsController {
 		StudentGrades selStudent = null;
 		String lastSelected = "";
 		
-		if(selectedStudent!=null) {		
+		if(selectedStudent!=null) {	
 			selStudent = postemSakaiService.getStudentByGBAndUsername(currentGradebook, selectedStudent);
 			selStudent.setGradebook(currentGradebook);
-		if (selStudent != null) {
-			lastSelected = selStudent.getUsername();
-		} 
+			if (selStudent != null) {
+				lastSelected = selStudent.getUsername();
+			} 
 		} 
 		model.addAttribute("lastSelected", lastSelected);
 		model.addAttribute("selStudent", selStudent);
@@ -180,9 +178,10 @@ public class ColumnsController {
 	@GetMapping(value = {"/gradebook_update/{gradebookId}"})
     public String getGradebookUpdate(@PathVariable("gradebookId") Long gradebookId, Model model) {
         log.debug("getGradebookUpdate");
-        String userId = sessionManager.getCurrentSessionUserId();
+
 		Pair pair = postemSakaiService.getGradebookById(gradebookId);
-        if(pair.getFirst()!= null && pair.getFirst().toString().equals(PostemToolConstants.PERMISSION_ERROR) && pair.getSecond()==null) {
+        if(pair.getFirst()!= null && pair.getFirst().toString().equals(PostemToolConstants.PERMISSION_ERROR) 
+        		&& pair.getSecond()==null) {
             return PostemToolConstants.PERMISSION_ERROR;
           }		
         currentGradebook = (Gradebook) pair.getSecond();
@@ -191,12 +190,13 @@ public class ColumnsController {
         String partFileReference = parts[parts.length-1];
   		
 		GradebookForm gradebookForm = new GradebookForm();
-		model.addAttribute("fileReference", partFileReference);
+		gradebookForm.setGradebookUpdate(true);
 		gradebookForm.setReleased(currentGradebook.getRelease());
 		gradebookForm.setTitle(currentGradebook.getTitle());
 		gradebookForm.setFileReference(partFileReference);
 		gradebookForm.setId(currentGradebook.getId());
   		model.addAttribute("gradebookForm", gradebookForm);
+  		model.addAttribute("fileReference", partFileReference);
         return PostemToolConstants.ADD_ITEM;
     }
    

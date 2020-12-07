@@ -13,7 +13,6 @@
 
 package org.sakaiproject.postem.form;
 
-
 import lombok.Data;
 
 @Data
@@ -23,5 +22,7 @@ public class GradebookForm {
 	private boolean released;
 	private String title;
 	private String fileReference;
-	    
+	private boolean gradebookUpdate;
+	private Object currentGradebook;//cast to gradebook
+	
 }

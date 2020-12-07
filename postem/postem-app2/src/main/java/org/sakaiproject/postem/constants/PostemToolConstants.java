@@ -19,6 +19,7 @@ public class PostemToolConstants {
 	
     public static final String REDIRECT_MAIN_TEMPLATE = "redirect:/index";
     public static final String INDEX_TEMPLATE = "index";
+    public static final String VERIFY = "verify";
     public static final String ADD_ITEM = "create_gradebook";
     public static final String GRADEBOOK_VIEW = "gradebook_view";
     public static final String STUDENT_VIEW = "student_view";
@@ -33,6 +34,6 @@ public class PostemToolConstants {
     public static final String MISSING_CSV = "missing_csv";
 	public static final String ERROR_UPLOADING = "error_uploading";
 	public static final String INVALID_DELIM = "invalid_delim";
-
+	public static final String HAS_STUDENTS = "has_students";
 
 }

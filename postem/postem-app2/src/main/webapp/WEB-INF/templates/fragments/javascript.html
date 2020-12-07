@@ -1,6 +1,32 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
 <body>
+<script th:fragment="verifyJs" th:inline="javascript">
+  /*<![CDATA[*/
+  var verifyFunctions = {
+		  
+	  cancelAction: function () {
+		  console.log('entering cancelAction');
+		  
+		  const form = document.createElement('form');
+		  	form.setAttribute("method", "get"); 
+		  
+	      const hiddenField = document.createElement('input');
+	      	hiddenField.type = 'hidden';
+	      	hiddenField.id = document.getElementById('title').id;
+	      	hiddenField.value = document.getElementById('title').value;
+	      	
+	      form.appendChild(hiddenField);
+	      
+		  form.setAttribute("action", "http://localhost:8080/portal/site/a859634f-3a03-49d6-a95a-0f06e3761731/tool/71355824-d5d9-4f8f-a363-2310e3ce9027/add"); 	      
+	      document.body.appendChild(form);
+	      form.submit();
+		  
+	  }
+	}
+  /*]]>*/
+</script>
+
 <script th:fragment="createGradeBookJs" th:inline="javascript">
   /*<![CDATA[*/
   // Load dropzone library
@@ -20,7 +46,6 @@
 		this.on("maxfilesexceeded", function(file) { this.removeFile(file); });
         // Client side copyright check
         submitButton.addEventListener("click", function() {
-        	console.log(1);
                 dz.processQueue(); // Tell Dropzone to process all queued files.
         });
 		
@@ -30,19 +55,20 @@
 
   /*]]>*/
 </script>
+
 <script th:fragment="studentViewJs" th:inline="javascript">
   /*<![CDATA[*/
   var studentViewFunctions = {
 		  
     showStudent: function () {
-      var selectedParticipant = document.getElementById('selectedParticipant').value;
-      document.getElementById('student_view_form').action;
+      const selectedParticipant = document.getElementById('selectedParticipant').value;
       document.getElementById('student_view_form').action = document.getElementById('student_view_form').action+'/'+selectedParticipant;
       document.getElementById('student_view_form').submit();
     }
 }
   /*]]>*/
 </script>
+
 </script>
 <script th:fragment="indexJs" th:inline="javascript">
   /*<![CDATA[*/
