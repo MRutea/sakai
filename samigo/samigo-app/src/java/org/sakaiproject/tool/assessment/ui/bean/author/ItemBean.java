@@ -39,7 +39,11 @@ import javax.faces.model.SelectItemGroup;
 
 import lombok.Getter;
 import lombok.Setter;
+<<<<<<< HEAD
 import org.apache.commons.math3.util.Precision;
+=======
+import org.apache.commons.lang3.StringUtils;
+>>>>>>> master
 
 import org.sakaiproject.tool.assessment.data.ifc.assessment.ItemDataIfc;
 import org.sakaiproject.component.cover.ServerConfigurationService;
