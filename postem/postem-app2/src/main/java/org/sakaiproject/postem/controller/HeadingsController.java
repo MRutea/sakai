@@ -1,8 +1,6 @@
 package org.sakaiproject.postem.controller;
 
 import java.util.List;
-import javax.inject.Inject;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -34,12 +32,15 @@ public class HeadingsController {
 		List<Gradebook> gradebooksList = postemSakaiService.getGradebooks(Gradebook.SORT_BY_TITLE, toggleAscending);
 		
 		model.addAttribute("gradebooksList", gradebooksList);
-		model.addAttribute("sortedByTitle", "true");
+		model.addAttribute("sortedByTitle", PostemToolConstants.POSTEM_TRUE_CONSTANT);
 		model.addAttribute("ascendingTitle", String.valueOf(toggleAscending));
-		model.addAttribute("ascendingCreator", "false");
-		model.addAttribute("ascendingModifiedBy", "false");
-		model.addAttribute("ascendingLastMod", "false");
-		model.addAttribute("ascendingReleased", "false");
+		model.addAttribute("ascendingCreator", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingModifiedBy", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingLastMod", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingReleased", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		
+		String visible = Boolean.toString(postemSakaiService.checkAccess());
+		model.addAttribute("visible", visible);	
 
         return PostemToolConstants.INDEX_TEMPLATE;
     }
@@ -54,12 +55,15 @@ public class HeadingsController {
 		List<Gradebook> gradebooksList = postemSakaiService.getGradebooks(Gradebook.SORT_BY_CREATOR, toggleAscending);
 		
 		model.addAttribute("gradebooksList", gradebooksList);
-		model.addAttribute("sortedByCreator", "true");
+		model.addAttribute("sortedByCreator", PostemToolConstants.POSTEM_TRUE_CONSTANT);
 		model.addAttribute("ascendingCreator", String.valueOf(toggleAscending));
-		model.addAttribute("ascendingTitle", "false");
-		model.addAttribute("ascendingModifiedBy", "false");
-		model.addAttribute("ascendingLastMod", "false");
-		model.addAttribute("ascendingReleased", "false");
+		model.addAttribute("ascendingTitle", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingModifiedBy", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingLastMod", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingReleased", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+	
+		String visible = Boolean.toString(postemSakaiService.checkAccess());
+		model.addAttribute("visible", visible);	
 
         return PostemToolConstants.INDEX_TEMPLATE;
     }
@@ -74,13 +78,16 @@ public class HeadingsController {
 		List<Gradebook> gradebooksList = postemSakaiService.getGradebooks(Gradebook.SORT_BY_MOD_BY, toggleAscending);
 		
 		model.addAttribute("gradebooksList", gradebooksList);
-		model.addAttribute("sortedByModifiedBy", "true");
+		model.addAttribute("sortedByModifiedBy", PostemToolConstants.POSTEM_TRUE_CONSTANT);
 		model.addAttribute("ascendingModifiedBy", String.valueOf(toggleAscending));
-		model.addAttribute("ascendingTitle", "false");
-		model.addAttribute("ascendingCreator", "false");
-		model.addAttribute("ascendingLastMod", "false");
-		model.addAttribute("ascendingReleased", "false");
+		model.addAttribute("ascendingTitle", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingCreator", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingLastMod", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingReleased", PostemToolConstants.POSTEM_FALSE_CONSTANT);
 
+		String visible = Boolean.toString(postemSakaiService.checkAccess());
+		model.addAttribute("visible", visible);	
+		
         return PostemToolConstants.INDEX_TEMPLATE;
     }
     
@@ -94,12 +101,15 @@ public class HeadingsController {
 		List<Gradebook> gradebooksList = postemSakaiService.getGradebooks(Gradebook.SORT_BY_MOD_DATE, toggleAscending);
 		
 		model.addAttribute("gradebooksList", gradebooksList);
-		model.addAttribute("sortedByLastModified", "true");
+		model.addAttribute("sortedByLastModified", PostemToolConstants.POSTEM_TRUE_CONSTANT);
 		model.addAttribute("ascendingLastMod", String.valueOf(toggleAscending));
-		model.addAttribute("ascendingTitle", "false");
-		model.addAttribute("ascendingCreator", "false");
-		model.addAttribute("ascendingModifiedBy", "false");
-		model.addAttribute("ascendingReleased", "false");
+		model.addAttribute("ascendingTitle", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingCreator", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingModifiedBy", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingReleased", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		
+		String visible = Boolean.toString(postemSakaiService.checkAccess());
+		model.addAttribute("visible", visible);	
 
         return PostemToolConstants.INDEX_TEMPLATE;
     }
@@ -114,12 +124,15 @@ public class HeadingsController {
 		List<Gradebook> gradebooksList = postemSakaiService.getGradebooks(Gradebook.SORT_BY_RELEASED, toggleAscending);
 		
 		model.addAttribute("gradebooksList", gradebooksList);
-		model.addAttribute("sortedByReleased", "true");
+		model.addAttribute("sortedByReleased", PostemToolConstants.POSTEM_TRUE_CONSTANT);
 		model.addAttribute("ascendingReleased", String.valueOf(toggleAscending));
-		model.addAttribute("ascendingTitle", "false");
-		model.addAttribute("ascendingCreator", "false");
-		model.addAttribute("ascendingModifiedBy", "false");
-		model.addAttribute("ascendingLastMod", "false");
+		model.addAttribute("ascendingTitle", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingCreator", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingModifiedBy", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingLastMod", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		
+		String visible = Boolean.toString(postemSakaiService.checkAccess());
+		model.addAttribute("visible", visible);	
 
         return PostemToolConstants.INDEX_TEMPLATE;
     }

@@ -9,7 +9,7 @@
             <a th:unless="${current}=='index'" href="#" th:href="@{/index}" th:text="#{bar_main}">Postem</a>
         </span>
       </li>
-      <li role="menuitem">
+      <li role="menuitem" th:if="${ visible == 'true'}">
         <span th:class="${current}=='add' ? 'current'"> 
           <span th:if="${current}=='add'" th:text="#{bar_new}">Add</span> 
             <a th:unless="${current}=='add'" href="#" th:href="@{/add}" th:text="#{bar_new}">Add</a>

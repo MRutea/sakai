@@ -23,6 +23,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRegistration.Dynamic;
 
+import org.sakaiproject.postem.constants.PostemToolConstants;
 import org.sakaiproject.util.RequestFilter;
 import org.sakaiproject.util.SakaiContextLoaderListener;
 import org.sakaiproject.util.ToolListener;
@@ -43,7 +44,7 @@ public class WebAppConfiguration implements WebApplicationInitializer {
         
         FilterRegistration requestFilterRegistration = servletContext.addFilter("sakai.request", RequestFilter.class);
         requestFilterRegistration.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD, DispatcherType.INCLUDE), true, "/*");
-        requestFilterRegistration.setInitParameter(RequestFilter.CONFIG_UPLOAD_ENABLED, "true");
+        requestFilterRegistration.setInitParameter(RequestFilter.CONFIG_UPLOAD_ENABLED, PostemToolConstants.POSTEM_TRUE_CONSTANT);
 
         Dynamic servlet = servletContext.addServlet("sakai-postem-tool2", new DispatcherServlet(rootContext));
         servlet.addMapping("/");

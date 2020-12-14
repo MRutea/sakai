@@ -65,12 +65,15 @@ public class MainController {
 		List<Gradebook> gradebooksList = postemSakaiService.getGradebooks(Gradebook.SORT_BY_TITLE, true);
 		
 		model.addAttribute("gradebooksList", gradebooksList);
-		model.addAttribute("sortedByTitle", "true");
-		model.addAttribute("ascendingTitle", "true");
-		model.addAttribute("ascendingCreator", "false");
-		model.addAttribute("ascendingModifiedBy", "false");
-		model.addAttribute("ascendingLastMod", "false");
-		model.addAttribute("ascendingReleased", "false");	
+		model.addAttribute("sortedByTitle", PostemToolConstants.POSTEM_TRUE_CONSTANT);
+		model.addAttribute("ascendingTitle", PostemToolConstants.POSTEM_TRUE_CONSTANT);
+		model.addAttribute("ascendingCreator", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingModifiedBy", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingLastMod", PostemToolConstants.POSTEM_FALSE_CONSTANT);
+		model.addAttribute("ascendingReleased", PostemToolConstants.POSTEM_FALSE_CONSTANT);	
+		
+		String visible = Boolean.toString(postemSakaiService.checkAccess());
+		model.addAttribute("visible", visible);	
 		
 		ToolSession toolSession = sessionManager.getCurrentToolSession();
 		toolSession.setAttribute("currentGradebook", null);
@@ -82,9 +85,23 @@ public class MainController {
     public String addItem(@ModelAttribute("gradebookForm") GradebookForm gradebookForm, Model model) {
         log.debug("addItem");
 
+		ToolSession toolSession = sessionManager.getCurrentToolSession();
+		Gradebook currentGradebook = (Gradebook) toolSession.getAttribute("currentGradebook");
+		
+		if (null != currentGradebook ) {
+		    String[] parts = currentGradebook.getFileReference().split("/");
+		    String partFileReference = parts[parts.length-1];
+			gradebookForm.setFileReference(partFileReference);			
+			gradebookForm.setTitle(currentGradebook.getTitle());
+			gradebookForm.setReleased(currentGradebook.getReleased());
+		}
+		
+		String visible = Boolean.toString(postemSakaiService.checkAccess());
+		model.addAttribute("visible", visible);	
+		
   		model.addAttribute("gradebookForm", gradebookForm);
   		model.addAttribute("fileReference", gradebookForm.getFileReference());
         return PostemToolConstants.ADD_ITEM;
     }
-   
+
 }

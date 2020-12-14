@@ -35,5 +35,18 @@ public class PostemToolConstants {
 	public static final String ERROR_UPLOADING = "error_uploading";
 	public static final String INVALID_DELIM = "invalid_delim";
 	public static final String HAS_STUDENTS = "has_students";
+	public static final String NAME_FILE_TOO_LONG = "name_file_too_long";
+	public static final String INVALID_EXT = "invalid_ext";
+	public static final String BLANK_HEADINGS = "blank_headings";
+	public static final String HEADING_TOO_LONG = "heading_too_long";
+	public static final String USER_NAME_INVALID = "user_name_invalid";
+	public static final String HAS_DUPLICATE_USERNAME = "has_duplicate_username";
+	public static final String STUDENT_GRADE_VIEW = "student_grade_view";
+	public static final String NO_GRADES_FOR_USER = "no_grades_for_user";
+	public static final String POSTEM_TRUE_CONSTANT = "true";
+	public static final String POSTEM_FALSE_CONSTANT = "false";
+	public static final String CSV_WITHOUT_STUDENTS = "csv_without_students";
+	public static final String CSV_DELETE_FAIL = "csv_delete_fail";
+	public static final String GENERIC_UPLOAD_ERROR = "generic_upload_error";
 
 }

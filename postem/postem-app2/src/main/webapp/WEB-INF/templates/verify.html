@@ -39,15 +39,10 @@
 			<div class="act">
 				<input accesskey="x" type="submit" class="active"
 					id="gradebook-continue-button" th:value="#{bar_post}"> 
-				<a th:href="@{#}" accesskey="x" id="gradebook-cancel-button"
-					class="btn btn-default" th:text="#{cancel}" onclick="verifyFunctions.cancelAction();">Cancel</a>
-				<input type="hidden" th:field="*{released}" id="released">
-				<input type="hidden" th:field="*{title}" id="title">
-				<input type="hidden" th:field="*{fileReference}" id="fileReference">
+				<a th:href="@{/add}" accesskey="x" id="gradebook-cancel-button"
+					class="btn btn-default" th:text="#{cancel}">Cancel</a>
 			</div>
 		</form>
 	</div>
-
-	<script th:replace="fragments/javascript :: verifyJs" />
 </body>
 </html>

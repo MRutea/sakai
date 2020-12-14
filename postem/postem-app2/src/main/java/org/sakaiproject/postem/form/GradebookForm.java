@@ -23,6 +23,5 @@ public class GradebookForm {
 	private String title;
 	private String fileReference;
 	private boolean gradebookUpdate;
-	private Object currentGradebook;//cast to gradebook
 	
 }
