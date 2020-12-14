@@ -2673,6 +2673,15 @@ public class AssignmentAction extends PagedResourceActionII {
             if (realm != null) {
                 context.put("activeUserIds", realm.getUsers());
             }
+
+            // for sorting assignment groups using the standard comparator
+            Map<String, List<String>> groupTitleMap = new HashMap<>(assignments.size());
+            AssignmentComparator groupComparator = new AssignmentComparator(null, SORTED_BY_GROUP_TITLE, Boolean.TRUE.toString());
+            for (Assignment asn : assignments) {
+                groupTitleMap.put(asn.getId(), getSortedAsnGroupTitles(asn, site, groupComparator));
+            }
+            context.put("asnGroupTitleMap", groupTitleMap);
+
         } catch (Exception ignore) {
             log.warn(this + ":build_list_assignments_context " + ignore.getMessage());
             log.warn(this + ignore.getMessage() + " siteId= " + contextString);
@@ -2699,6 +2708,12 @@ public class AssignmentAction extends PagedResourceActionII {
         return template + TEMPLATE_LIST_ASSIGNMENTS;
 
     } // build_list_assignments_context
+
+    private List<String> getSortedAsnGroupTitles(Assignment asn, Site site, AssignmentComparator groupComparator) {
+        List<Group> asnGroups = asn.getGroups().stream().map(id -> site.getGroup(id)).collect(Collectors.toList());
+        asnGroups.sort(groupComparator);
+        return asnGroups.stream().map(Group::getTitle).collect(Collectors.toList());
+    }
 
     private Set<String> getSubmittersIdSet(List<AssignmentSubmission> submissions) {
         return submissions.stream().map(AssignmentSubmission::getSubmitters).flatMap(Set::stream).map(AssignmentSubmissionSubmitter::getSubmitter).collect(Collectors.toSet());
@@ -4673,6 +4688,18 @@ public class AssignmentAction extends PagedResourceActionII {
             context.put("attachmentReferences", attachmentReferences);
 
             supplementItemIntoContext(state, context, assignment, null);
+
+            // for sorting assignment groups using the standard comparator
+            String contextString = (String) state.getAttribute(STATE_CONTEXT_STRING);
+            try {
+                Site site = siteService.getSite(contextString);
+                AssignmentComparator groupComparator = new AssignmentComparator(null, SORTED_BY_GROUP_TITLE, Boolean.TRUE.toString());
+                String groupTitles = StringUtils.join(getSortedAsnGroupTitles(assignment, site, groupComparator), ", ");
+                context.put("asnGroupTitles", groupTitles.isEmpty() ? rb.getString("gen.viewallgroupssections") : groupTitles);
+            }
+            catch (IdUnusedException e) {
+                // ignore
+            }
         }
 
         if (taggingManager.isTaggable() && assignment != null) {
@@ -9840,6 +9867,7 @@ public class AssignmentAction extends PagedResourceActionII {
                 state.setAttribute("selectedAssignments", new ArrayList());
                 state.setAttribute(STATE_MODE, MODE_LIST_ASSIGNMENTS);
                 state.setAttribute(STATE_SELECTED_VIEW, MODE_LIST_ASSIGNMENTS);
+                state.setAttribute(SORTED_BY, SORTED_BY_DEFAULT);
             }
         } else {
             addAlert(state, rb.getString("youmust6"));
@@ -9877,6 +9905,17 @@ public class AssignmentAction extends PagedResourceActionII {
                                 && Instant.now().plus(1, ChronoUnit.DAYS).isBefore(a.getDueDate())) {
                             assignmentDueReminderService.scheduleDueDateReminder(a.getId());
                         }
+
+                        // Restore gradebook item only if assignment was previously associated
+                        if (StringUtils.equals(a.getProperties().get(NEW_ASSIGNMENT_ADD_TO_GRADEBOOK), GRADEBOOK_INTEGRATION_ASSOCIATE)) {
+                            String siteId = (String) state.getAttribute(STATE_CONTEXT_STRING);
+                            String title = a.getTitle();
+                            String associateGradebookAssignment = null; // Stored in properties, but we need to pass null so the gradebook integration algorithm creates the item rather than updating the (non-existing) original
+                            String addToGradebook = GRADEBOOK_INTEGRATION_ADD; // Stored in properties as "associate" already, but we need to pass "add" to recreate the original
+                            long category = -1L; // We have to default to no category because the original gradebook item was hard deleted and category ID is not stored in assignment properties
+                            initIntegrateWithGradebook(state, siteId, title, associateGradebookAssignment, a, title, a.getDueDate(), a.getTypeOfGrade(), a.getMaxGradePoint().toString(),
+                                                        addToGradebook, associateGradebookAssignment, a.getTypeOfAccess().toString(), category);
+                        }
                     }
                 } catch (IdUnusedException | PermissionException e) {
                     addAlert(state, rb.getFormattedMessage("youarenot_editAssignment", id));
@@ -9888,6 +9927,7 @@ public class AssignmentAction extends PagedResourceActionII {
                 state.setAttribute("selectedAssignments", new ArrayList());
                 state.setAttribute(STATE_MODE, MODE_LIST_ASSIGNMENTS);
                 state.setAttribute(STATE_SELECTED_VIEW, MODE_LIST_ASSIGNMENTS);
+                state.setAttribute(SORTED_BY, SORTED_BY_DEFAULT);
             }
         } else {
             addAlert(state, rb.getString("youmust6"));
