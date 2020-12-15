@@ -32,7 +32,6 @@ public class PostemToolConstants {
 	public static final String RESULT_OK = "result_ok";
 	public static final String RESULT_KO = "result_ko";
     public static final String MISSING_CSV = "missing_csv";
-	public static final String ERROR_UPLOADING = "error_uploading";
 	public static final String INVALID_DELIM = "invalid_delim";
 	public static final String HAS_STUDENTS = "has_students";
 	public static final String NAME_FILE_TOO_LONG = "name_file_too_long";
@@ -48,5 +47,7 @@ public class PostemToolConstants {
 	public static final String CSV_WITHOUT_STUDENTS = "csv_without_students";
 	public static final String CSV_DELETE_FAIL = "csv_delete_fail";
 	public static final String GENERIC_UPLOAD_ERROR = "generic_upload_error";
+	public static final String BLANK_ROWS = "blank_rows";
+	public static final String EMPTY_FILE = "empty_file";
 
 }

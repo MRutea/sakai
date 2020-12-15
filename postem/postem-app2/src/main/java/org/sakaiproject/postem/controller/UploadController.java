@@ -135,6 +135,17 @@ public class UploadController {
 			String result = postemSakaiService.processCreate(currentGradebook, isGradebookUpdate);
 			
 			switch (result) {
+			  case PostemToolConstants.EMPTY_FILE: 
+				 model.addAttribute("errorMessage", PostemToolConstants.EMPTY_FILE);
+				 return PostemToolConstants.ADD_ITEM;
+			  case PostemToolConstants.BLANK_ROWS: 
+				 model.addAttribute("errorMessage", PostemToolConstants.BLANK_ROWS);
+				 return PostemToolConstants.ADD_ITEM;
+			  case PostemToolConstants.HAS_DUPLICATE_USERNAME: 
+				 literalErrorMessage = MessageFormat.format(messageSource.getMessage(PostemToolConstants.HAS_DUPLICATE_USERNAME, null, locale), 
+						 postemSakaiService.getDuplicateUserNames());
+				 model.addAttribute("literalErrorMessage", literalErrorMessage);
+				 return PostemToolConstants.ADD_ITEM;	
 			  case PostemToolConstants.GENERIC_UPLOAD_ERROR: 
 				 model.addAttribute("errorMessage", PostemToolConstants.GENERIC_UPLOAD_ERROR);
 				 return PostemToolConstants.ADD_ITEM;			
@@ -159,25 +170,22 @@ public class UploadController {
 				 model.addAttribute("errorMessage", PostemToolConstants.MISSING_CSV);
 				 return PostemToolConstants.ADD_ITEM;
 			  case PostemToolConstants.PERMISSION_ERROR:
-					 model.addAttribute("errorMessage", PostemToolConstants.PERMISSION_ERROR);
-					 return PostemToolConstants.ADD_ITEM;
+				 model.addAttribute("errorMessage", PostemToolConstants.PERMISSION_ERROR);
+				 return PostemToolConstants.ADD_ITEM;
 			  case PostemToolConstants.INVALID_EXT:
-				  literalErrorMessage = MessageFormat.format(messageSource.getMessage(PostemToolConstants.INVALID_EXT, null, locale), 
+				 literalErrorMessage = MessageFormat.format(messageSource.getMessage(PostemToolConstants.INVALID_EXT, null, locale), 
 						  partFileReference, TITLE_MAX_LENGTH);
 				  break;
 			  case PostemToolConstants.BLANK_HEADINGS:
-				    model.addAttribute("errorMessage", PostemToolConstants.BLANK_HEADINGS);
+				 model.addAttribute("errorMessage", PostemToolConstants.BLANK_HEADINGS);
 					return PostemToolConstants.ADD_ITEM;
 			  case PostemToolConstants.HEADING_TOO_LONG:
-				  literalErrorMessage = MessageFormat.format(messageSource.getMessage(PostemToolConstants.HEADING_TOO_LONG, null, locale), 
+				 literalErrorMessage = MessageFormat.format(messageSource.getMessage(PostemToolConstants.HEADING_TOO_LONG, null, locale), 
 						  new Integer(HEADING_MAX_LENGTH));
-				  break;
+				 break;
 			  case PostemToolConstants.USER_NAME_INVALID:
-					 model.addAttribute("errorMessage", PostemToolConstants.USER_NAME_INVALID);
-					 return PostemToolConstants.ADD_ITEM;
-			  case PostemToolConstants.HAS_DUPLICATE_USERNAME:
-					 model.addAttribute("errorMessage", PostemToolConstants.HAS_DUPLICATE_USERNAME);
-					 return PostemToolConstants.ADD_ITEM;
+			     model.addAttribute("errorMessage", PostemToolConstants.USER_NAME_INVALID);
+				return PostemToolConstants.ADD_ITEM;
 			}
         } else {
         	currentGradebook = sessionGradebook;

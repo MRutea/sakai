@@ -22,23 +22,18 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.Locale;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.UUID;
-import java.util.Vector;
 import java.util.stream.Collectors;
-import java.util.zip.DataFormatException;
-
-import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
-import org.springframework.ui.Model;
 import org.springframework.web.multipart.MultipartFile;
 import org.apache.commons.io.FilenameUtils;
-import org.sakaiproject.antivirus.api.VirusFoundException;
+import org.apache.commons.lang3.StringUtils;
 import org.sakaiproject.api.app.postem.data.Gradebook;
 import org.sakaiproject.api.app.postem.data.GradebookManager;
 import org.sakaiproject.api.app.postem.data.StudentGrades;
@@ -47,33 +42,15 @@ import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.authz.api.GroupNotDefinedException;
 import org.sakaiproject.authz.api.SecurityAdvisor;
 import org.sakaiproject.authz.api.SecurityService;
-import org.sakaiproject.authz.api.SecurityAdvisor.SecurityAdvice;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.content.api.ContentCollectionEdit;
 import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.ContentResource;
 import org.sakaiproject.content.api.ContentResourceEdit;
-import org.sakaiproject.content.api.ContentResourceFilter;
-import org.sakaiproject.content.api.FilePickerHelper;
-import org.sakaiproject.content.api.ResourceToolAction;
-import org.sakaiproject.content.api.ResourceType;
 import org.sakaiproject.entity.api.Entity;
-import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.entity.api.ResourceProperties;
-import org.sakaiproject.entity.api.ResourcePropertiesEdit;
-import org.sakaiproject.entity.cover.EntityManager;
-import org.sakaiproject.event.api.SessionState;
 import org.sakaiproject.event.cover.NotificationService;
-import org.sakaiproject.exception.IdInvalidException;
-import org.sakaiproject.exception.IdLengthException;
-import org.sakaiproject.exception.IdUniquenessException;
-import org.sakaiproject.exception.IdUnusedException;
-import org.sakaiproject.exception.IdUsedException;
-import org.sakaiproject.exception.InconsistentException;
-import org.sakaiproject.exception.OverQuotaException;
 import org.sakaiproject.exception.PermissionException;
-import org.sakaiproject.exception.ServerOverloadException;
-import org.sakaiproject.exception.TypeException;
 import org.sakaiproject.postem.constants.PostemToolConstants;
 
 import org.sakaiproject.postem.helpers.Pair;
@@ -82,14 +59,12 @@ import org.sakaiproject.tool.api.Placement;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.tool.api.ToolSession;
 import org.sakaiproject.tool.cover.ToolManager;
+import org.sakaiproject.user.api.PreferencesService;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.user.api.UserNotDefinedException;
-import org.sakaiproject.util.Validator;
 import org.sakaiproject.postem.helpers.CSV;
 import org.sakaiproject.site.cover.SiteService;
-import org.sakaiproject.content.api.ContentHostingService;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -116,10 +91,13 @@ public class PostemSakaiService  {
 	protected static final String STATE_CONTENT_SERVICE = "DbContentService";
 
 	protected boolean withHeader = true;
+	char csv_delim = CSV.COMMA_DELIM;
 	
 	/** kernel api **/
 	private static SecurityService securityService  = ComponentManager.get(SecurityService.class);
 	private static ToolManager toolManager = ComponentManager.get(ToolManager.class);
+	
+	private ToolSession toolSession;
 	
 	@Autowired
 	private SessionManager sessionManager;
@@ -135,6 +113,12 @@ public class PostemSakaiService  {
 	
 	@Autowired
 	private AuthzGroupService authzGroupService;
+	
+	@Autowired
+	private MessageSource messageSource;
+	
+    @Autowired
+    private PreferencesService preferencesService;
 
 	public List<Gradebook> getGradebooks(String sortBy, boolean ascending) {
 		String userId = sessionManager.getCurrentSessionUserId();
@@ -288,10 +272,10 @@ public class PostemSakaiService  {
 
   public String doDragDropUpload (MultipartFile file, HttpServletRequest request) {
 		 
-		ToolSession toolSession = sessionManager.getCurrentToolSession();
 		String max_file_size_mb = FILE_UPLOAD_MAX_SIZE;
 		long max_bytes = 1024L * 1024L;
 		String fileName = "";
+		toolSession = sessionManager.getCurrentToolSession();
 		
 		try
 		{
@@ -378,7 +362,7 @@ public class PostemSakaiService  {
 		            log.error("Failed to store file.", e);
 		            fileName = "";
 		    		toolSession.setAttribute("attachmentId", "");
-		            return PostemToolConstants.ERROR_UPLOADING;
+		            return PostemToolConstants.GENERIC_UPLOAD_ERROR;
 		        } finally {
 		            securityService.popAdvisor(advisor);
 		        }
@@ -395,6 +379,8 @@ public class PostemSakaiService  {
 	  }
   
   public String processCreate(Gradebook currentGradebook, boolean isGradebookUpdate) {
+	  
+		toolSession = sessionManager.getCurrentToolSession();
 
 		try {
 			if (!this.checkAccess()) {
@@ -405,8 +391,6 @@ public class PostemSakaiService  {
 		} catch (PermissionException e) {
 			return PostemToolConstants.PERMISSION_ERROR;
 		}
-		
-		ToolSession toolSession = sessionManager.getCurrentToolSession();
 		
 		if (null != currentGradebook && null != currentGradebook.getTitle()) {
 			ArrayList<Gradebook> gb = getGradebooks();			
@@ -427,8 +411,6 @@ public class PostemSakaiService  {
 
 		if (toolSession.getAttribute("attachmentId") != null) {
 			try {
-				
-				char csv_delim = CSV.COMMA_DELIM;
 				
 				//Read the data from attachment
 				String attachmentId = (String) toolSession.getAttribute("attachmentId");
@@ -461,7 +443,10 @@ public class PostemSakaiService  {
 
 						List headingList = grades.getHeaders();
 						for(int col=0; col < headingList.size(); col++) {
-							String heading = (String)headingList.get(col).toString().trim();	
+							String heading = (String)headingList.get(col).toString().trim();
+							if(heading.equals("") && grades.getStudents().size() == 0) {
+								return PostemToolConstants.EMPTY_FILE;
+							}
 							// Make sure there are no blank headings
 							if(heading == null || heading.equals("")) {
 								return PostemToolConstants.BLANK_HEADINGS;
@@ -481,11 +466,13 @@ public class PostemSakaiService  {
 					  return PostemToolConstants.CSV_WITHOUT_STUDENTS;
 				    }
 					
-				    if(!usernamesValid(grades)) {
-					  return PostemToolConstants.USER_NAME_INVALID;
+				    String usernamesValid =  usernamesValid(grades);
+				    if(null != usernamesValid) {
+				        final Locale locale = StringUtils.isNotBlank(userId) ? preferencesService.getLocale(userId) : Locale.getDefault();
+					    return usernamesValid;
 				    }
 				  
-				    if (hasADuplicateUsername(grades)) {
+				    if (hasADuplicateUserName(grades)) {
 					  return PostemToolConstants.HAS_DUPLICATE_USERNAME;
 				    }
 				}
@@ -499,11 +486,11 @@ public class PostemSakaiService  {
 					gradebookManager.createStudentGradesInGradebook(uname, ss,
 							currentGradebook);
 					if (currentGradebook.getStudents().size() == 1) {
-						currentGradebook.setFirstUploadedUsername(uname);  //otherwise, the verify screen shows first in ABC order
+						currentGradebook.setFirstUploadedUsername(uname);
 					}
 				}
 			} catch (Exception exception) {
-				exception.printStackTrace();
+				return PostemToolConstants.GENERIC_UPLOAD_ERROR;
 			} 
 		}
 
@@ -574,8 +561,8 @@ public class PostemSakaiService  {
     	// remove all security advisors
     	securityService.popAdvisor();
     }
-
-	private boolean hasADuplicateUsername(CSV studentGrades) {
+    
+	private boolean hasADuplicateUserName(CSV studentGrades) {
 		List usernameList = studentGrades.getStudentUsernames();
 		List duplicatesList = new ArrayList();
 		
@@ -592,30 +579,71 @@ public class PostemSakaiService  {
 			return false;
 		}
 		
-		if (duplicatesList.size() == 1) {
-			System.out.println("single_duplicate_username");
-		} else {
-			System.out.println("mult_duplicate_usernames");
-		}
-		
-		for (int i=0; i < duplicatesList.size(); i++) {
-			System.out.println("duplicate_username");
-		}
-		
-			System.out.println("duplicate_username_dir");
-		
 		return true;
 	}
+
+	public String getDuplicateUserNames() {
+		
+		String duplicates = null;
+		try {		
+			toolSession = sessionManager.getCurrentToolSession();
+			//Read the data from attachment
+			String attachmentId = (String) toolSession.getAttribute("attachmentId");
+			ContentResource cr = contentHostingService.getResource(attachmentId);
+			//Check the type
+			if (ResourceProperties.TYPE_URL.equalsIgnoreCase(cr.getContentType())) {
+				//Going to need to read from a stream
+				String csvURL = new String(cr.getContent());
+				//Load the URL
+				csv = URLConnectionReader.getText(csvURL); 
+				if (log.isDebugEnabled()) {
+					log.debug(csv);
+				}
+			}
+			else {
+				// check that file is actually a CSV file
+				if (!cr.getContentType().equalsIgnoreCase("text/csv")) {
+					return PostemToolConstants.INVALID_EXT;
+				}
 	
-	private boolean usernamesValid(CSV studentGrades) {
+				csv = new String(cr.getContent());
+				if (log.isDebugEnabled()) {
+					log.debug(csv);
+				}
+			}
+	
+			CSV grades = new CSV(csv, withHeader, csv_delim);
+			List userNameList = grades.getStudentUsernames();
+			List duplicatesList = new ArrayList();
+			
+			while (userNameList.size() > 0) {
+				String userName = (String)userNameList.get(0);
+				userNameList.remove(userName);
+				if (userNameList.contains(userName)
+						&& !duplicatesList.contains(userName)) {
+					duplicatesList.add(userName);
+				}
+			}
+			
+			if (duplicatesList.size() <= 0) {
+				return duplicates;
+			}
+			
+			duplicates = (String) duplicatesList.stream().collect(Collectors.joining(", "));
+			
+	} catch (Exception exception) {
+		exception.printStackTrace();
+		log.error("getDuplicateUserNamesException:", exception);
+	}
+		return duplicates;
+	}
+	
+	private String usernamesValid(CSV studentGrades) {
 		
-		if (studentGrades.getStudents().size()==0) {
-			return false;
-		}
 		
-		boolean usersAreValid = true;
-		List blankRows = new ArrayList();
-		List invalidUsernames = new ArrayList();
+		String usersAreValid = null;
+		List<Integer> blankRows = new ArrayList<Integer>();
+		List<String> invalidUsernames = new ArrayList<String>();
 		int row=1;
 		
 		List siteMembers = getSiteMembers();
@@ -632,39 +660,22 @@ public class PostemSakaiService  {
 			}
 			if (usr == null || usr.equals("")) {
 
-				usersAreValid = false;
+				usersAreValid = null;
 				blankRows.add(new Integer(row));
 			} else if(siteMembers == null || (siteMembers != null && !siteMembers.contains(getUserDefined(usr)))) {
-				  usersAreValid = false;
+				  usersAreValid = null;
 				  invalidUsernames.add(usr);
 			}	
 		}
 		
-		if (blankRows.size() == 1) {
-			System.out.println("missing_single_username");
-			System.out.println("missing_location");
-			System.out.println("missing_username_dir");
-		} else if (blankRows.size() > 1) {
-			System.out.println("missing_mult_usernames");
-			for(int i=0; i < blankRows.size(); i++) {
-				System.out.println("missing_location");
-			}
-			System.out.println("missing_username_dir");
+		if (blankRows.size() >= 1) {
+			usersAreValid = PostemToolConstants.BLANK_ROWS;
 		}
 		
-		if (invalidUsernames.size() == 1) {
-			System.out.println("blank");
-			System.out.println("single_invalid_username");
-			System.out.println("invalid_username");
-			System.out.println("single_invalid_username_dir");
-		} else if (invalidUsernames.size() > 1) {
-			System.out.println("blank");
-			System.out.println("mult_invalid_usernames");
-			for(int j=0; j < invalidUsernames.size(); j++) {
-				System.out.println("invalid_username");
-			}	
-			System.out.println("mult_invalid_usernames_dir");
+		if (invalidUsernames.size() >= 1) {
+			usersAreValid = PostemToolConstants.USER_NAME_INVALID;
 		}
+		
 	  return usersAreValid;
 	}
 
