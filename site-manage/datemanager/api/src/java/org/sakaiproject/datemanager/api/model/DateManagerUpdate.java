@@ -23,4 +23,13 @@ public class DateManagerUpdate {
 	public Instant openDate;
 	public Instant dueDate;
 	public Instant acceptUntilDate;
+	public Instant feedbackStartDate;
+	public Instant feedbackEndDate;
+
+	public DateManagerUpdate(Object object, Instant openDate, Instant dueDate, Instant acceptUntilDate) {
+		this.object = object;
+		this.openDate = openDate;
+		this.dueDate = dueDate;
+		this.acceptUntilDate = acceptUntilDate;
+	}
 }
