@@ -43,6 +43,7 @@ import org.sakaiproject.authz.api.GroupNotDefinedException;
 import org.sakaiproject.authz.api.SecurityAdvisor;
 import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.cover.ComponentManager;
+import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentCollectionEdit;
 import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.ContentResource;
@@ -271,8 +272,8 @@ public class PostemSakaiService  {
   }
 
   public String doDragDropUpload (MultipartFile file, HttpServletRequest request) {
-		 
-		String max_file_size_mb = FILE_UPLOAD_MAX_SIZE;
+		
+		String max_file_size_mb = ServerConfigurationService.getString(PostemToolConstants.SAK_PROP_MAX_UPLOAD_FILE_SIZE);
 		long max_bytes = 1024L * 1024L;
 		String fileName = "";
 		toolSession = sessionManager.getCurrentToolSession();
@@ -283,7 +284,7 @@ public class PostemSakaiService  {
 		}
 		catch(Exception e)
 		{
-			max_file_size_mb = "1";
+			max_file_size_mb = "20";
 			max_bytes = 1024L * 1024L;
 		}
 		
@@ -319,7 +320,7 @@ public class PostemSakaiService  {
 
 			if(contentLength >= max_bytes)
 			{
-				return "file_too_big";
+				return PostemToolConstants.FILE_TOO_BIG;
 			}
 			else if(fileContentStream != null)
 			{

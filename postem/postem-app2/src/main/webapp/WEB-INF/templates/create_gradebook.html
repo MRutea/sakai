@@ -19,7 +19,9 @@
 		<div class="alertMessage" th:if="${literalErrorMessage != null}">
         	<div th:text="${literalErrorMessage}"></div>
     	</div>
-    	
+    	<!-- upload max size -->
+    	<input type="hidden" th:value="${uploadMax}" id="uploadMax">
+    					
 		<div class="instruction">
 			<strong th:text="#{feedback_instructions}" /></strong><br />
 			<div

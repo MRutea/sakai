@@ -37,6 +37,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.support.RequestContextUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.sakaiproject.component.cover.ServerConfigurationService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -101,6 +102,11 @@ public class MainController {
 		
   		model.addAttribute("gradebookForm", gradebookForm);
   		model.addAttribute("fileReference", gradebookForm.getFileReference());
+  		String uploadMax = ServerConfigurationService.getString(PostemToolConstants.SAK_PROP_MAX_UPLOAD_FILE_SIZE);
+  		if (null == uploadMax || uploadMax.isEmpty()) {
+  			uploadMax = "20"; //default MB
+  		}
+  		model.addAttribute("uploadMax", uploadMax);
         return PostemToolConstants.ADD_ITEM;
     }
 

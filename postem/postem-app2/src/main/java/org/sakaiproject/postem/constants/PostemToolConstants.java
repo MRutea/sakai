@@ -49,5 +49,7 @@ public class PostemToolConstants {
 	public static final String GENERIC_UPLOAD_ERROR = "generic_upload_error";
 	public static final String BLANK_ROWS = "blank_rows";
 	public static final String EMPTY_FILE = "empty_file";
+	public static final String SAK_PROP_MAX_UPLOAD_FILE_SIZE = "content.upload.max";
+	public static final String FILE_TOO_BIG = "file_too_big";
 
 }

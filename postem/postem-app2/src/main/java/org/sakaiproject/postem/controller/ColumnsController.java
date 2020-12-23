@@ -16,6 +16,7 @@ import javax.servlet.ServletContext;
 import org.apache.commons.lang3.StringUtils;
 import org.sakaiproject.api.app.postem.data.Gradebook;
 import org.sakaiproject.api.app.postem.data.StudentGrades;
+import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.postem.constants.PostemToolConstants;
 import org.sakaiproject.postem.form.GradebookForm;
 import org.sakaiproject.postem.helpers.CSV;
@@ -23,6 +24,7 @@ import org.sakaiproject.postem.helpers.MediaTypeUtils;
 import org.sakaiproject.postem.helpers.Pair;
 import org.sakaiproject.postem.service.PostemSakaiService;
 import org.sakaiproject.tool.api.SessionManager;
+import org.sakaiproject.tool.api.ToolSession;
 import org.sakaiproject.user.api.PreferencesService;
 import org.sakaiproject.user.api.UserNotDefinedException;
 import org.sakaiproject.user.cover.UserDirectoryService;
@@ -267,6 +269,16 @@ public class ColumnsController {
 		gradebookForm.setId(currentGradebook.getId());
   		model.addAttribute("gradebookForm", gradebookForm);
   		model.addAttribute("fileReference", partFileReference);
+  		String uploadMax = ServerConfigurationService.getString(PostemToolConstants.SAK_PROP_MAX_UPLOAD_FILE_SIZE);
+  		if (null == uploadMax || uploadMax.isEmpty()) {
+  			uploadMax = "20"; //default MB
+  		}
+  		model.addAttribute("uploadMax", uploadMax);
+  		
+		ToolSession toolSession = sessionManager.getCurrentToolSession();
+  		toolSession.setAttribute("resultUploading", PostemToolConstants.RESULT_OK);
+  		toolSession.setAttribute("attachmentId", currentGradebook.getFileReference());
+  		
         return PostemToolConstants.ADD_ITEM;
     }
    
