@@ -16,13 +16,8 @@
 package org.sakaiproject.postem.controller;
 
 import java.text.MessageFormat;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.TreeSet;
-
-import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
@@ -44,8 +39,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.extern.slf4j.Slf4j;
@@ -132,16 +125,10 @@ public class UploadController {
 						 new Integer(currentGradebook.getTitle().trim().length()), TITLE_MAX_LENGTH);
 				 model.addAttribute("literalErrorMessage", literalErrorMessage);
 				 return PostemToolConstants.ADD_ITEM;
-			  case PostemToolConstants.PERMISSION_ERROR:
-				 model.addAttribute("errorMessage", PostemToolConstants.PERMISSION_ERROR);
-				 return PostemToolConstants.ADD_ITEM;
 			  case PostemToolConstants.INVALID_EXT:
 				 literalErrorMessage = MessageFormat.format(messageSource.getMessage(PostemToolConstants.INVALID_EXT, null, locale), 
 						  partFileReference, TITLE_MAX_LENGTH);
 				  break;
-			  case PostemToolConstants.BLANK_HEADINGS:
-				 model.addAttribute("errorMessage", PostemToolConstants.BLANK_HEADINGS);
-					return PostemToolConstants.ADD_ITEM;
 			  case PostemToolConstants.HEADING_TOO_LONG:
 				 literalErrorMessage = MessageFormat.format(messageSource.getMessage(PostemToolConstants.HEADING_TOO_LONG, null, locale), 
 						  new Integer(HEADING_MAX_LENGTH));

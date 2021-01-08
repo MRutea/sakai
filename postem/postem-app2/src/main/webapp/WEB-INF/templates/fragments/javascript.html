@@ -8,9 +8,8 @@
   
 $( document ).ready(function() {
 	
-	const uploadMax = document.getElementById('uploadMax').value;
-  // myDropzone is the configuration for the element that has an id attribute
-  // with the value my-dropzone (or myDropzone)
+   const uploadMax = document.getElementById('uploadMax').value;
+
    Dropzone.options.dropzoneForm = {
 	  autoProcessQueue: false,
 	  acceptedFiles: ".csv",
@@ -29,14 +28,12 @@ $( document ).ready(function() {
 		
 		this.on("removedfile", function (file) {
     		submitButton.disabled = false;
-    		document.getElementById('uploadingFailed').style.display = 'none';
-    		document.getElementById('uploadingFailed').textContent = ''; 
+    		document.getElementById('uploading-failed').style.display = 'none';
+    		document.getElementById('uploading-failed').textContent = ''; 
         });
 		
         // Client side copyright check
         submitButton.addEventListener("click", function(e) {
-        	console.log('submit');
-        	
             // Make sure that the form isn't actually being sent.
             e.preventDefault();
             e.stopPropagation();
@@ -50,7 +47,6 @@ $( document ).ready(function() {
 		
         this.on('success', function(file, responseText, e) {
             status = file.status;
-        	console.log('success');
         });
         
         this.on("error", function(file, message, xhr) {
@@ -59,15 +55,12 @@ $( document ).ready(function() {
         });
         
         this.on('queuecomplete', function() {
-        	console.log('queuecomplete');
         	if (status === Dropzone.SUCCESS) {
-            	console.log('queuecomplete1');
             	document.getElementById('addContentForm').submit();
         	} else {
-            	console.log('queuecomplete2');
         		submitButton.disabled = true;
-        		document.getElementById('uploadingFailed').style.display = 'block';
-        		document.getElementById('uploadingFailed').textContent = errorMessage; 
+        		document.getElementById('uploading-failed').style.display = 'block';
+        		document.getElementById('uploading-failed').textContent = errorMessage; 
         	}
         });
 		
@@ -84,8 +77,8 @@ $( document ).ready(function() {
 		  
     showStudent: function () {
       const selectedParticipant = document.getElementById('selectedParticipant').value;
-      document.getElementById('student_view_form').action = document.getElementById('student_view_form').action+'/'+selectedParticipant;
-      document.getElementById('student_view_form').submit();
+      document.getElementById('student-view-form').action = document.getElementById('student-view-form').action+'/'+selectedParticipant;
+      document.getElementById('student-view-form').submit();
     }
 }
   /*]]>*/

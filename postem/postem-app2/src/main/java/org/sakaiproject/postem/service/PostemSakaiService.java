@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -30,11 +29,9 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.sakaiproject.api.app.postem.data.Gradebook;
 import org.sakaiproject.api.app.postem.data.GradebookManager;
 import org.sakaiproject.api.app.postem.data.StudentGrades;
@@ -61,7 +58,6 @@ import org.sakaiproject.tool.api.Placement;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.tool.api.ToolSession;
 import org.sakaiproject.tool.cover.ToolManager;
-import org.sakaiproject.user.api.PreferencesService;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.user.api.UserNotDefinedException;
@@ -115,12 +111,6 @@ public class PostemSakaiService  {
 	
 	@Autowired
 	private AuthzGroupService authzGroupService;
-	
-	@Autowired
-	private MessageSource messageSource;
-	
-    @Autowired
-    private PreferencesService preferencesService;
 
 	public List<Gradebook> getGradebooks(String sortBy, boolean ascending) {
 		String userId = sessionManager.getCurrentSessionUserId();
@@ -137,7 +127,7 @@ public class PostemSakaiService  {
 		String currentSiteId = placement.getContext();
 
 		siteId = currentSiteId;
-		List<Gradebook> gradebooks = new ArrayList<Gradebook>();
+		List<Gradebook> gradebooks = new ArrayList<>();
 		try {
 			if (checkAccess()) {
 				gradebooks = new ArrayList(gradebookManager
