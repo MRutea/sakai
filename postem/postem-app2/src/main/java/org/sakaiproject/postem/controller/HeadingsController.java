@@ -119,7 +119,6 @@ public class HeadingsController {
         log.debug("Postem sortByReleased");
         
         boolean toggleAscending = toggleSort(ascendingReleased);
-		String userId = sessionManager.getCurrentSessionUserId();
 		
 		List<Gradebook> gradebooksList = postemSakaiService.getGradebooks(Gradebook.SORT_BY_RELEASED, toggleAscending);
 		

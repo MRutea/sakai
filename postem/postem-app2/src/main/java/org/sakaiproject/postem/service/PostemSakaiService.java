@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -92,7 +93,7 @@ public class PostemSakaiService  {
 	protected static final String STATE_CONTENT_SERVICE = "DbContentService";
 
 	protected boolean withHeader = true;
-	char csv_delim = CSV.COMMA_DELIM;
+	char csvDelim = CSV.COMMA_DELIM;
 	
 	/** kernel api **/
 	private static SecurityService securityService  = ComponentManager.get(SecurityService.class);
@@ -124,7 +125,7 @@ public class PostemSakaiService  {
 	public List<Gradebook> getGradebooks(String sortBy, boolean ascending) {
 		String userId = sessionManager.getCurrentSessionUserId();
 			
-		if (userId != null) {
+		if (Objects.nonNull(userId)) {
 			try {
 				userEid = userDirectoryService.getUserEid(userId);
 			} catch (UserNotDefinedException e) {
@@ -139,11 +140,9 @@ public class PostemSakaiService  {
 		List<Gradebook> gradebooks = new ArrayList<Gradebook>();
 		try {
 			if (checkAccess()) {
-				// logger.info("**** Getting by context!");
 				gradebooks = new ArrayList(gradebookManager
 						.getGradebooksByContext(siteId, sortBy, ascending));
 			} else {
-				// logger.info("**** Getting RELEASED by context!");
 				gradebooks = new ArrayList(gradebookManager
 						.getReleasedGradebooksByContext(siteId, sortBy, ascending));
 			}
@@ -194,7 +193,6 @@ public class PostemSakaiService  {
 			}
 
 		} catch (PermissionException e) {
-			// logger.info(this + ".getEntries() in PostemTool " + e);
 			return new Pair(PostemToolConstants.PERMISSION_ERROR, null);
 		}
 		
@@ -254,7 +252,7 @@ public class PostemSakaiService  {
   }	
   
   public boolean isEditable() {
-    if (editable == null) {
+    if (Objects.isNull(editable)) {
       editable = checkAccess();
     }
     return editable;
@@ -273,37 +271,35 @@ public class PostemSakaiService  {
 
   public String doDragDropUpload (MultipartFile file, HttpServletRequest request) {
 		
-		String max_file_size_mb = ServerConfigurationService.getString(PostemToolConstants.SAK_PROP_MAX_UPLOAD_FILE_SIZE);
-		long max_bytes = 1024L * 1024L;
+		String maxFileSizeMb = ServerConfigurationService.getString(PostemToolConstants.SAK_PROP_MAX_UPLOAD_FILE_SIZE);
+		long maxBytes = 1024L * 1024L;
 		String fileName = "";
 		toolSession = sessionManager.getCurrentToolSession();
 		
 		try
 		{
-			max_bytes = Long.parseLong(max_file_size_mb) * 1024L * 1024L;
+			maxBytes = Long.parseLong(maxFileSizeMb) * 1024L * 1024L;
 		}
 		catch(Exception e)
 		{
-			max_file_size_mb = "20";
-			max_bytes = 1024L * 1024L;
+	  		if (Objects.isNull(maxFileSizeMb) || maxFileSizeMb.isEmpty()) {
+	  			maxFileSizeMb = "20"; //default MB
+	  		}
+	  		maxBytes = 1024L * 1024L;
 		}
 		
-		if(file == null)
+		if (Objects.isNull(file))
 		{
 			//The user submitted an empty file
-			return PostemToolConstants.GENERIC_UPLOAD_ERROR;
+			return PostemToolConstants.MISSING_CSV;
 		}
 		
 		if (file.isEmpty()) {
-			return PostemToolConstants.GENERIC_UPLOAD_ERROR;
+			return PostemToolConstants.EMPTY_FILE;
 		}
-		else if (file.getResource().getFilename() == null || file.getResource().getFilename().length() == 0)
+		else if (Objects.isNull(file.getResource().getFilename()) || file.getResource().getFilename().length() == 0)
 		{
 			return PostemToolConstants.GENERIC_UPLOAD_ERROR;
-		}
-		else if (file.getResource().getFilename().length()  > TITLE_MAX_LENGTH) 
-		{
-			return PostemToolConstants.TITLE_TOO_LONG;
 		}
 		else if (file.getResource().getFilename().length() > 0)
 		{
@@ -316,13 +312,12 @@ public class PostemSakaiService  {
 			}
 			
 			long contentLength = file.getSize();
-			String contentType = file.getContentType();
 
-			if(contentLength >= max_bytes)
+			if(contentLength >= maxBytes)
 			{
 				return PostemToolConstants.FILE_TOO_BIG;
 			}
-			else if(fileContentStream != null)
+			else if(Objects.nonNull(fileContentStream))
 			{
 		        SecurityAdvisor advisor = new SecurityAdvisor() {
 		            public SecurityAdvice isAllowed(String userId, String function, String reference) {
@@ -393,7 +388,7 @@ public class PostemSakaiService  {
 			return PostemToolConstants.PERMISSION_ERROR;
 		}
 		
-		if (null != currentGradebook && null != currentGradebook.getTitle()) {
+		if (Objects.nonNull(currentGradebook) && Objects.nonNull(currentGradebook.getTitle())) {
 			ArrayList<Gradebook> gb = getGradebooks();			
 			List<Gradebook> result = gb.stream().filter(gradeb -> gradeb.getTitle().equals(currentGradebook.getTitle()))
 					.filter(gradeb -> !gradeb.getId().equals(currentGradebook.getId())).collect(Collectors.toList());
@@ -402,7 +397,7 @@ public class PostemSakaiService  {
 			}
 		}
 		
-		if (currentGradebook.getTitle() == null
+		if (Objects.isNull(currentGradebook)
 				|| currentGradebook.getTitle().equals("")) {
 			return PostemToolConstants.MISSING_TITLE;
 		}
@@ -410,7 +405,7 @@ public class PostemSakaiService  {
 			return PostemToolConstants.TITLE_TOO_LONG;
 		}
 
-		if (toolSession.getAttribute("attachmentId") != null) {
+		if (Objects.nonNull(toolSession.getAttribute("attachmentId"))) {
 			try {
 				
 				//Read the data from attachment
@@ -437,10 +432,10 @@ public class PostemSakaiService  {
 						log.debug(csv);
 					}
 				}
-				CSV grades = new CSV(csv, withHeader, csv_delim);
+				CSV grades = new CSV(csv, withHeader, csvDelim);
 				
 				if (withHeader == true) {
-					if (grades.getHeaders() != null) {
+					if (Objects.nonNull(grades.getHeaders())) {
 
 						List headingList = grades.getHeaders();
 						for(int col=0; col < headingList.size(); col++) {
@@ -449,7 +444,7 @@ public class PostemSakaiService  {
 								return PostemToolConstants.EMPTY_FILE;
 							}
 							// Make sure there are no blank headings
-							if(heading == null || heading.equals("")) {
+							if(Objects.isNull(heading) || heading.equals("")) {
 								return PostemToolConstants.BLANK_HEADINGS;
 							}
 							// Make sure the headings don't exceed max limit
@@ -461,15 +456,14 @@ public class PostemSakaiService  {
 					}
 				}
 				
-				if (grades.getStudents() != null) {
+				if (Objects.nonNull(grades.getStudents())) {
 					
 				    if(grades.getStudents().size() == 0) {
 					  return PostemToolConstants.CSV_WITHOUT_STUDENTS;
 				    }
 					
 				    String usernamesValid =  usernamesValid(grades);
-				    if(null != usernamesValid) {
-				        final Locale locale = StringUtils.isNotBlank(userId) ? preferencesService.getLocale(userId) : Locale.getDefault();
+				    if(Objects.nonNull(usernamesValid)) {
 					    return usernamesValid;
 				    }
 				  
@@ -511,7 +505,7 @@ public class PostemSakaiService  {
 	public ArrayList<Gradebook> getGradebooks() {
 			String userId = sessionManager.getCurrentSessionUserId();
 			
-			if (userId != null) {
+			if (Objects.nonNull(userId)) {
 				try {
 					userEid = userDirectoryService.getUserEid(userId);
 				} catch (UserNotDefinedException e) {
@@ -613,7 +607,7 @@ public class PostemSakaiService  {
 				}
 			}
 	
-			CSV grades = new CSV(csv, withHeader, csv_delim);
+			CSV grades = new CSV(csv, withHeader, csvDelim);
 			List userNameList = grades.getStudentUsernames();
 			List duplicatesList = new ArrayList();
 			
@@ -659,11 +653,11 @@ public class PostemSakaiService  {
 				log.debug("usernamesValid : username=" + usr);
 				log.debug("usernamesValid : siteMembers" + siteMembers);
 			}
-			if (usr == null || usr.equals("")) {
+			if (Objects.isNull(usr) || usr.equals("")) {
 
 				usersAreValid = null;
 				blankRows.add(new Integer(row));
-			} else if(siteMembers == null || (siteMembers != null && !siteMembers.contains(getUserDefined(usr)))) {
+			} else if(Objects.isNull(siteMembers) || (Objects.nonNull(siteMembers) && !siteMembers.contains(getUserDefined(usr)))) {
 				  usersAreValid = null;
 				  invalidUsernames.add(usr);
 			}	

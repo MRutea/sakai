@@ -8,6 +8,7 @@ import java.io.PrintStream;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import javax.inject.Inject;
@@ -248,7 +249,7 @@ public class ColumnsController {
         log.debug("getGradebookUpdate");
 
 		Pair pair = postemSakaiService.getGradebookById(gradebookId);
-        if(pair.getFirst()!= null && pair.getFirst().toString().equals(PostemToolConstants.PERMISSION_ERROR) 
+        if (pair.getFirst()!= null && pair.getFirst().toString().equals(PostemToolConstants.PERMISSION_ERROR) 
         		&& pair.getSecond()==null) {
             return PostemToolConstants.PERMISSION_ERROR;
           }		
@@ -258,8 +259,11 @@ public class ColumnsController {
 		model.addAttribute("visible", visible);	
 		
         String fileReference = currentGradebook.getFileReference();
-        String[] parts = fileReference.split("/");
-        String partFileReference = parts[parts.length-1];
+        String partFileReference = "";
+        if (Objects.nonNull(fileReference)) {
+            String[] parts = fileReference.split("/");
+            partFileReference = parts[parts.length-1];
+        }
   		
 		GradebookForm gradebookForm = new GradebookForm();
 		gradebookForm.setGradebookUpdate(true);
@@ -270,13 +274,12 @@ public class ColumnsController {
   		model.addAttribute("gradebookForm", gradebookForm);
   		model.addAttribute("fileReference", partFileReference);
   		String uploadMax = ServerConfigurationService.getString(PostemToolConstants.SAK_PROP_MAX_UPLOAD_FILE_SIZE);
-  		if (null == uploadMax || uploadMax.isEmpty()) {
+  		if (Objects.isNull(uploadMax) || uploadMax.isEmpty()) {
   			uploadMax = "20"; //default MB
   		}
   		model.addAttribute("uploadMax", uploadMax);
   		
 		ToolSession toolSession = sessionManager.getCurrentToolSession();
-  		toolSession.setAttribute("resultUploading", PostemToolConstants.RESULT_OK);
   		toolSession.setAttribute("attachmentId", currentGradebook.getFileReference());
   		
         return PostemToolConstants.ADD_ITEM;

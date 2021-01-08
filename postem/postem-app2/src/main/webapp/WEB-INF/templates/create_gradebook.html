@@ -11,6 +11,9 @@
 			<h1 th:text="#{create_update}" /></h1>
 		</div>
 		
+		<div class="alertMessage" id="uploadingFailed" style="display:none">
+		</div>
+		
 		<div class="alertMessage"
 			th:if="${errorMessage != null && errorMessage !=''}"
 			th:text="#{${errorMessage}}">

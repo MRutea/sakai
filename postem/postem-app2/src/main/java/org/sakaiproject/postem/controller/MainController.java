@@ -17,6 +17,7 @@ package org.sakaiproject.postem.controller;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -89,7 +90,7 @@ public class MainController {
 		ToolSession toolSession = sessionManager.getCurrentToolSession();
 		Gradebook currentGradebook = (Gradebook) toolSession.getAttribute("currentGradebook");
 		
-		if (null != currentGradebook ) {
+		if (Objects.nonNull(currentGradebook )) {
 		    String[] parts = currentGradebook.getFileReference().split("/");
 		    String partFileReference = parts[parts.length-1];
 			gradebookForm.setFileReference(partFileReference);			
@@ -103,7 +104,7 @@ public class MainController {
   		model.addAttribute("gradebookForm", gradebookForm);
   		model.addAttribute("fileReference", gradebookForm.getFileReference());
   		String uploadMax = ServerConfigurationService.getString(PostemToolConstants.SAK_PROP_MAX_UPLOAD_FILE_SIZE);
-  		if (null == uploadMax || uploadMax.isEmpty()) {
+  		if (Objects.isNull(uploadMax) || uploadMax.isEmpty()) {
   			uploadMax = "20"; //default MB
   		}
   		model.addAttribute("uploadMax", uploadMax);
