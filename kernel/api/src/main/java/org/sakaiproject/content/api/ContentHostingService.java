@@ -260,6 +260,8 @@ public interface ContentHostingService extends EntityProducer
 	 */
 	public static final String PREVIEW = "PREVIEW";
 
+	public static final String SAK_PROP_MAX_UPLOAD_FILE_SIZE = "content.upload.max";
+
 	/**
     * For a given id, return its UUID (creating it if it does not already exist)
     */
