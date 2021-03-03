@@ -1057,6 +1057,11 @@ public class AssignmentAction extends PagedResourceActionII {
      * Site property for forcing anonymous grading in a site
      */
     private static final String SAK_PROP_FORCE_ANON_GRADING = "assignment.anon.grading.forced";
+    /**
+     * Site property for export rubric in pdf
+     */
+    private static final String RUBRICS_EXPORT_PDF = "enablePdfExport";
+    private static final String RUBRICS_EXPORT_PDF_SERVER_PROPERTY = "rubrics.export.pdf";
 
     private static final String FLAG_ON = "on";
     private static final String FLAG_TRUE = "true";
@@ -2575,10 +2580,10 @@ public class AssignmentAction extends PagedResourceActionII {
         }
         
         context.put("submitterNames", getSubmitterFormattedNames(submission, "build_instructor_grade_submission_context"));
+        context.put(RUBRICS_EXPORT_PDF, serverConfigurationService.getBoolean(RUBRICS_EXPORT_PDF_SERVER_PROPERTY, false));
 
         String template = (String) getContext(data).get("template");
         return template + TEMPLATE_STUDENT_VIEW_GRADE;
-
     } // build_student_view_grade_context
 
     /**
@@ -3868,6 +3873,7 @@ public class AssignmentAction extends PagedResourceActionII {
         if (useSakaiGrader) {
             return template + TEMPLATE_INSTRUCTOR_GRADE_SUBMISSION_WITH_GRADER;
         } else {
+            context.put(RUBRICS_EXPORT_PDF, serverConfigurationService.getBoolean(RUBRICS_EXPORT_PDF_SERVER_PROPERTY, false));
             return template + TEMPLATE_INSTRUCTOR_GRADE_SUBMISSION;
         }
 

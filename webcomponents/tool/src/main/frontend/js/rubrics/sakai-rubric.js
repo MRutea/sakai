@@ -9,6 +9,7 @@ import {SakaiRubricModifiedDate} from "./sakai-rubric-modified-date.js";
 import {SakaiRubricCreatorName} from "./sakai-rubric-creator-name.js";
 import {tr} from "./sakai-rubrics-language.js";
 import {SharingChangeEvent} from "./sharing-change-event.js";
+import { SakaiRubricPdf } from "./sakai-rubric-pdf.js";
 
 export class SakaiRubric extends RubricsElement {
 
@@ -22,6 +23,7 @@ export class SakaiRubric extends RubricsElement {
         "Content-Type": "application/json-patch+json",
       },
     };
+    this.enablePdfExport = false;
   }
 
   static get properties() {
@@ -32,7 +34,8 @@ export class SakaiRubric extends RubricsElement {
       shareIcon: { type: String },
       weightedIcon: String,
       totalWeight: String,
-      validWeight: Boolean
+      validWeight: Boolean,
+      enablePdfExport: { type: Boolean }
     };
   }
 
@@ -118,6 +121,11 @@ export class SakaiRubric extends RubricsElement {
             :
             ""
           }
+          ${this.enablePdfExport ? html`
+          <div class="action-container">
+            <sakai-rubric-pdf rubricTitle="${this.rubric.title}" token="${this.token}" rubricId="${this.rubric.id}"/>
+          </div>
+            ` : ""}
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import { ifDefined } from "/webcomponents/assets/lit-html/directives/if-defined.
 import { SakaiRubricGradingComment } from "./sakai-rubric-grading-comment.js";
 import { SakaiRubricsLanguage } from "./sakai-rubrics-language.js";
 import { tr } from "./sakai-rubrics-language.js";
+import { SakaiRubricPdf } from "./sakai-rubric-pdf.js";
 
 export class SakaiRubricGrading extends RubricsElement {
 
@@ -36,7 +37,8 @@ export class SakaiRubricGrading extends RubricsElement {
       translatedTotalPoints: { type: Number },
       selectedRatings: { type: Array },
       criteria: { type: Array },
-      rubric: { type: Object }
+      rubric: { type: Object },
+      enablePdfExport: { attribute: "enable-pdf-export", type: Object }
     };
   }
 
@@ -80,7 +82,11 @@ export class SakaiRubricGrading extends RubricsElement {
   render() {
 
     return html`
-      <h3 style="margin-bottom: 10px;">${this.rubric.title}</h3>
+      <h3 style="margin-bottom: 10px;">${this.rubric.title}
+          ${this.enablePdfExport ? html`
+            <sakai-rubric-pdf rubricTitle="${this.rubric.title}" rubricId="${this.rubric.id}" token="${this.token}" toolId="${this.toolId}" entityId="${this.entityId}" evaluatedItemId="${this.evaluatedItemId}"/>
+            ` : ""}
+      </h3>
       ${this.evaluation && this.evaluation.status === "DRAFT" ? html`
         <div class="sak-banner-warn">
           <sr-lang key="draft_evaluation">DRAFT</sr-lang>
@@ -369,6 +375,7 @@ export class SakaiRubricGrading extends RubricsElement {
 
       this.association = data._embedded['rubric-associations'][0];
       var rubricId = data._embedded['rubric-associations'][0].rubricId;
+      this.rubricId = rubricId;
       this.getRubric(rubricId);
     }).fail((jqXHR, textStatus, errorThrown) => {
       console.log(textStatus);console.log(errorThrown);

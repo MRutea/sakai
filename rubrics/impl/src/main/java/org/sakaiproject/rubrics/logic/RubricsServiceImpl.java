@@ -115,6 +115,7 @@ public class RubricsServiceImpl implements RubricsService, EntityProducer, Entit
     private static final String RBCS_SERVICE_URL_PREFIX = "/rubrics-service/rest/";
 
     private static final String RUBRICS_TOKEN_SIGNING_SHARED_SECRET_PROPERTY = "rubrics.integration.token-secret";
+    private static final String RUBRICS_EXPORT_PDF = "rubrics.export.pdf";
     private static final String SITE_CONTEXT_TYPE = "site";
 
     private static final String JWT_ISSUER = "sakai";
@@ -1254,6 +1255,10 @@ public class RubricsServiceImpl implements RubricsService, EntityProducer, Entit
         } catch(Exception e){
             log.error("Rubrics: error trying to delete rubric -> {}" , e.getMessage());
         }
+    }
+
+    public boolean isPdfExportEnabled() {
+        return serverConfigurationService.getBoolean(RUBRICS_EXPORT_PDF, false);
     }
 
 }

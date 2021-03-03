@@ -343,6 +343,7 @@
                 entity-id="$assignment.Id"
                 evaluated-item-id="$submission.Id"
                 evaluated-item-owner-id="$submitterId"
+                enable-pdf-export="$enablePdfExport"
             ></sakai-rubric-grading>
         </div>
         </div>

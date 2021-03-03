@@ -68,5 +68,6 @@ public interface RubricsService {
     void restoreRubricAssociationsByItemIdPrefix(String itemId, String toolId);
 
     void deleteSiteRubrics(String siteId);
+    boolean isPdfExportEnabled();
 
 }
