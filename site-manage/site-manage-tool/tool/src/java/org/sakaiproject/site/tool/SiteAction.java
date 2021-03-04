@@ -10918,6 +10918,13 @@ private Map<String, List<MyTool>> getTools(SessionState state, String type, Site
 			if (!(icon.isEmpty() || formattedText.validateURL(icon))) {
 				addAlert(state, rb.getString("alert.protocol"));
 			}
+			
+			Pattern p = Pattern.compile("([^\\s]+(\\.(?i)(jpe?g|png|gif|bmp|svg))$)");
+			Matcher m = p.matcher(icon);
+			if (!(icon.isEmpty() || m.matches())) {
+				addAlert(state, rb.getString("alert.sitediinf.invalidimageurl"));
+			}
+			
 			siteInfo.iconUrl = icon;
 		} else if (params.getString("skin") != null) {
 			siteInfo.iconUrl = params.getString("skin");
